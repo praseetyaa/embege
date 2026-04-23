@@ -37,13 +37,13 @@ export default async function HistoryPage({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Riwayat Pengajuan</h1>
-          <p className="text-slate-500">Daftar semua reimbursement yang pernah Anda ajukan</p>
+          <h1 className="text-2xl font-bold text-slate-900">Riwayat Catatan</h1>
+          <p className="text-slate-500">Daftar semua pengeluaran yang pernah Anda catat</p>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-[calc(100vh-220px)] min-h-[400px]">
-        <HistoryFilters initialStatus={params.status} />
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[calc(100vh-220px)] min-h-[400px]">
+        <HistoryFilters />
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
@@ -53,18 +53,17 @@ export default async function HistoryPage({
                 <FileText className="w-8 h-8 text-slate-400" />
               </div>
               <h3 className="text-lg font-medium text-slate-900 mb-1">Belum ada data</h3>
-              <p className="text-slate-500">Tidak ada pengajuan yang sesuai dengan kriteria.</p>
+              <p className="text-slate-500">Tidak ada catatan yang sesuai dengan kriteria.</p>
             </div>
           ) : (
             <table className="data-table w-full relative">
               <thead className="sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th>ID</th>
-                  <th>Tanggal Pengajuan</th>
+                  <th>Tanggal Dicatat</th>
                   <th>Periode</th>
                   <th>Judul/Keterangan</th>
                   <th>Total Nilai</th>
-                  <th>Status</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -80,11 +79,6 @@ export default async function HistoryPage({
                     <td className="text-slate-600">{item.period}</td>
                     <td className="font-medium text-slate-900">{item.title}</td>
                     <td className="font-bold text-slate-900">{formatCurrency(item.total_amount)}</td>
-                    <td>
-                      <span className={`status-badge ${getStatusColor(item.status)}`}>
-                        {getStatusLabel(item.status)}
-                      </span>
-                    </td>
                     <td>
                       <Link 
                         href={`/history/${item.id}`}

@@ -2,9 +2,11 @@ import { createClient } from "@/lib/supabase/server"
 import { formatCurrency, getStatusColor, getStatusLabel } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Download, FileText, CheckCircle, XCircle, Clock, User, Building, CreditCard } from "lucide-react"
-import AdminActions from "./admin-actions"
+import { PrintPdfButton } from "@/components/ui/print-pdf-button"
+import { ArrowLeft, Download, FileText, User, Building, CreditCard } from "lucide-react"
 import { DownloadExcelButton } from "@/components/ui/download-excel-button"
+import { ExpenseFormTemplate } from "@/components/print/ExpenseFormTemplate"
+import { SingleDocumentPasteTemplate } from "@/components/print/SingleDocumentPasteTemplate"
 
 export default async function AdminSubmissionDetail({ params }: { params: Promise<{ id: string }> }) {
   const p = await params
@@ -28,25 +30,25 @@ export default async function AdminSubmissionDetail({ params }: { params: Promis
   const profile = reimbursement.profiles
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      <div className="flex items-center gap-4">
+    <>
+      <div className="space-y-6 max-w-5xl mx-auto pb-12 print:hidden">
+        <div className="flex items-center gap-4 print:hidden">
         <Link href="/admin/submissions" className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Review Pengajuan</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Detail Catatan</h1>
           <p className="text-slate-500">#{reimbursement.id.substring(0, 8).toUpperCase()}</p>
         </div>
-        <div className="ml-auto flex gap-2">
-          <span className={`px-4 py-2 rounded-lg text-sm font-semibold border ${getStatusColor(reimbursement.status)}`}>
-            {getStatusLabel(reimbursement.status)}
-          </span>
+        <div className="ml-auto flex gap-2 print:hidden">
+          <DownloadExcelButton reimbursement={reimbursement} />
+          <PrintPdfButton />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Info */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6">
+        {/* Main Info */}
+        <div className="space-y-6">
           {/* User Info Card */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h3 className="font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Informasi Pengaju</h3>
@@ -135,40 +137,20 @@ export default async function AdminSubmissionDetail({ params }: { params: Promis
           </div>
 
           {reimbursement.notes && (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h3 className="font-semibold text-slate-800 mb-2">Catatan Karyawan</h3>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mt-6">
+              <h3 className="font-semibold text-slate-800 mb-2">Catatan Tambahan</h3>
               <p className="text-slate-600 bg-amber-50 p-4 rounded-lg border border-amber-100">{reimbursement.notes}</p>
             </div>
           )}
         </div>
-
-        {/* Right Column - Actions */}
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 sticky top-6">
-            <h3 className="font-bold text-slate-800 mb-4">Tindakan Admin</h3>
-            
-            {reimbursement.status === "pending" ? (
-              <AdminActions reimbursementId={reimbursement.id} />
-            ) : (
-              <div className="space-y-4">
-                <div className={`p-4 rounded-lg border ${reimbursement.status === 'approved' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
-                  <p className="font-semibold mb-1">
-                    Status: {reimbursement.status === 'approved' ? 'Telah Disetujui' : 'Telah Ditolak'}
-                  </p>
-                  <p className="text-sm opacity-90 mt-2">
-                    <strong>Catatan Admin:</strong><br />
-                    {reimbursement.admin_notes || '-'}
-                  </p>
-                </div>
-                
-                {reimbursement.status === 'approved' && (
-                  <DownloadExcelButton reimbursement={reimbursement} />
-                )}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
+
+      <div className="hidden print:block print:w-[297mm]">
+        <ExpenseFormTemplate reimbursement={reimbursement} />
+        <div className="break-before-page"></div>
+        <SingleDocumentPasteTemplate reimbursement={reimbursement} />
+      </div>
+    </>
   )
 }

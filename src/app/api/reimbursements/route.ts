@@ -76,7 +76,7 @@ export async function POST(request: Request) {
         title,
         total_amount,
         notes,
-        status: "pending" // Initial status when submitted
+        status: "approved" // Auto-approved for personal tracking mode
       })
       .select()
       .single()

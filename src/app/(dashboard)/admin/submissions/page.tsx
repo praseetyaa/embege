@@ -35,16 +35,13 @@ export default async function AdminSubmissionsPage({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Semua Pengajuan</h1>
-          <p className="text-slate-500">Kelola daftar seluruh reimbursement karyawan</p>
+          <h1 className="text-2xl font-bold text-slate-900">Semua Catatan</h1>
+          <p className="text-slate-500">Kelola daftar seluruh catatan pengeluaran karyawan</p>
         </div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col min-h-[500px]">
-        <SubmissionFilters 
-          initialSearch={params.search} 
-          initialStatus={params.status} 
-        />
+        <SubmissionFilters initialSearch={params.search} />
 
         {/* List */}
         <div className="flex-1 overflow-x-auto">
@@ -54,19 +51,18 @@ export default async function AdminSubmissionsPage({
                 <FileText className="w-8 h-8 text-slate-400" />
               </div>
               <h3 className="text-lg font-medium text-slate-900 mb-1">Data tidak ditemukan</h3>
-              <p className="text-slate-500">Tidak ada pengajuan yang sesuai dengan filter pencarian Anda.</p>
+              <p className="text-slate-500">Tidak ada catatan yang sesuai dengan pencarian Anda.</p>
             </div>
           ) : (
             <table className="data-table w-full relative">
               <thead className="sticky top-0 z-10 shadow-sm">
                 <tr>
-                  <th>Pengaju</th>
+                  <th>Pengguna</th>
                   <th>Departemen</th>
-                  <th>Judul Pengajuan</th>
+                  <th>Judul Catatan</th>
                   <th>Periode</th>
                   <th>Total Nilai</th>
-                  <th>Status</th>
-                  <th>Tanggal</th>
+                  <th>Tanggal Dicatat</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -78,11 +74,6 @@ export default async function AdminSubmissionsPage({
                     <td className="font-medium text-slate-800">{item.title}</td>
                     <td className="text-slate-600">{item.period}</td>
                     <td className="font-bold text-slate-900">{formatCurrency(item.total_amount)}</td>
-                    <td>
-                      <span className={`status-badge ${getStatusColor(item.status)}`}>
-                        {getStatusLabel(item.status)}
-                      </span>
-                    </td>
                     <td className="text-slate-600">
                       {new Date(item.created_at).toLocaleDateString('id-ID')}
                     </td>

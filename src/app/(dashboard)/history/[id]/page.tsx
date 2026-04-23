@@ -4,6 +4,9 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Download, FileText, CheckCircle, XCircle, Clock } from "lucide-react"
 import { DownloadExcelButton } from "@/components/ui/download-excel-button"
+import { PrintPdfButton } from "@/components/ui/print-pdf-button"
+import { ExpenseFormTemplate } from "@/components/print/ExpenseFormTemplate"
+import { SingleDocumentPasteTemplate } from "@/components/print/SingleDocumentPasteTemplate"
 
 export default async function ReimbursementDetail({ params }: { params: Promise<{ id: string }> }) {
   // Await params first to satisfy Next 15+ 
@@ -31,8 +34,9 @@ export default async function ReimbursementDetail({ params }: { params: Promise<
   const items = reimbursement.reimbursement_items || []
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      <div className="flex items-center gap-4">
+    <>
+      <div className="space-y-6 max-w-5xl mx-auto pb-12 print:hidden">
+        <div className="flex items-center gap-4 print:hidden">
         <Link href="/history" className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -40,16 +44,15 @@ export default async function ReimbursementDetail({ params }: { params: Promise<
           <h1 className="text-2xl font-bold text-slate-900">Detail Pengajuan</h1>
           <p className="text-slate-500">#{reimbursement.id.substring(0, 8).toUpperCase()}</p>
         </div>
-        <div className="ml-auto">
-          {reimbursement.status === 'approved' && (
-            <DownloadExcelButton reimbursement={reimbursement} />
-          )}
+        <div className="ml-auto flex gap-2 print:hidden">
+          <DownloadExcelButton reimbursement={reimbursement} />
+          <PrintPdfButton />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Info */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6">
+        {/* Main Info */}
+        <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-200 flex justify-between items-start">
               <div>
@@ -58,9 +61,6 @@ export default async function ReimbursementDetail({ params }: { params: Promise<
                   <FileText className="w-4 h-4" /> Periode: {reimbursement.period}
                 </p>
               </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${getStatusColor(reimbursement.status)}`}>
-                {getStatusLabel(reimbursement.status)}
-              </span>
             </div>
             
             <div className="p-0">
@@ -95,75 +95,19 @@ export default async function ReimbursementDetail({ params }: { params: Promise<
 
           {reimbursement.notes && (
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h3 className="font-semibold text-slate-800 mb-2">Catatan Pengaju</h3>
+              <h3 className="font-semibold text-slate-800 mb-2">Catatan Tambahan</h3>
               <p className="text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-100">{reimbursement.notes}</p>
             </div>
           )}
-
-          {reimbursement.admin_notes && (
-            <div className={`p-6 rounded-xl shadow-sm border ${reimbursement.status === 'rejected' ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
-              <h3 className={`font-semibold mb-2 ${reimbursement.status === 'rejected' ? 'text-red-800' : 'text-emerald-800'}`}>
-                Catatan Admin ({reimbursement.status === 'rejected' ? 'Alasan Penolakan' : 'Persetujuan'})
-              </h3>
-              <p className={reimbursement.status === 'rejected' ? 'text-red-700' : 'text-emerald-700'}>
-                {reimbursement.admin_notes}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Right Column - Timeline */}
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-slate-800 mb-6">Status Timeline</h3>
-            
-            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-white bg-blue-500 text-white shadow shrink-0 z-10">
-                  <CheckCircle className="w-4 h-4" />
-                </div>
-                <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] bg-slate-50 p-4 rounded-lg border border-slate-100 shadow-sm ml-4 md:ml-0 md:mr-4">
-                  <h4 className="font-semibold text-slate-900 text-sm">Pengajuan Dibuat</h4>
-                  <p className="text-xs text-slate-500 mt-1">{new Date(reimbursement.created_at).toLocaleString('id-ID')}</p>
-                </div>
-              </div>
-
-              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 border-white shadow shrink-0 z-10 ${
-                  reimbursement.status === 'pending' ? 'bg-amber-400 text-white animate-pulse' : 
-                  'bg-blue-500 text-white'
-                }`}>
-                  {reimbursement.status === 'pending' ? <Clock className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-                </div>
-                <div className={`w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] p-4 rounded-lg border shadow-sm ml-4 md:ml-0 md:mr-4 ${
-                  reimbursement.status === 'pending' ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'
-                }`}>
-                  <h4 className="font-semibold text-slate-900 text-sm">Menunggu Review Admin</h4>
-                  {reimbursement.status === 'pending' && <p className="text-xs text-amber-600 mt-1">Dalam proses</p>}
-                </div>
-              </div>
-
-              {reimbursement.status !== 'pending' && (
-                <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 border-white shadow shrink-0 z-10 ${
-                    reimbursement.status === 'approved' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
-                  }`}>
-                    {reimbursement.status === 'approved' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                  </div>
-                  <div className={`w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] p-4 rounded-lg border shadow-sm ml-4 md:ml-0 md:mr-4 ${
-                    reimbursement.status === 'approved' ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'
-                  }`}>
-                    <h4 className="font-semibold text-slate-900 text-sm">
-                      {reimbursement.status === 'approved' ? 'Pengajuan Disetujui' : 'Pengajuan Ditolak'}
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1">{new Date(reimbursement.updated_at).toLocaleString('id-ID')}</p>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
-        </div>
       </div>
     </div>
+      
+      <div className="hidden print:block print:w-[297mm]">
+        <ExpenseFormTemplate reimbursement={reimbursement} />
+        <div className="break-before-page"></div>
+        <SingleDocumentPasteTemplate reimbursement={reimbursement} />
+      </div>
+    </>
   )
 }

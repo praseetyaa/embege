@@ -25,11 +25,11 @@ export default async function DashboardLayout({
   const isAdmin = profile?.role === "super_admin"
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden print:h-auto print:overflow-visible print:bg-white">
       <Sidebar isAdmin={isAdmin} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden print:overflow-visible">
         <Topbar user={profile} isAdmin={isAdmin} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 print:overflow-visible print:p-0">
           <div className="max-w-7xl mx-auto animate-fade-in">
             {children}
           </div>

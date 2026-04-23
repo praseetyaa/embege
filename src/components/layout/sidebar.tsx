@@ -37,7 +37,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const links = isAdmin ? adminLinks : userLinks
 
   return (
-    <aside className="w-64 bg-[#0F172A] text-white hidden md:flex flex-col h-screen sticky top-0 left-0 border-r border-slate-800">
+    <aside className="w-64 bg-[#0F172A] text-white hidden md:flex flex-col h-screen sticky top-0 left-0 border-r border-slate-800 print:hidden">
       <div className="p-6">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 tracking-tight">
           REIMBURSE

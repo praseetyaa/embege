@@ -17,6 +17,7 @@ import {
   Trash2
 } from "lucide-react"
 import { toast } from "sonner"
+import { EXPENSE_CATEGORIES } from "@/lib/constants"
 
 export default function NewReimbursementPage() {
   const [step, setStep] = useState(1)
@@ -56,14 +57,20 @@ export default function NewReimbursementPage() {
         
         if (response.ok) {
           const data = await response.json()
+          if (data.error) {
+            toast.error(`Gagal membaca struk: ${data.error}`)
+          }
           newItems.push({
             id: Date.now().toString() + i,
             ...data,
-            // mapping category text to ID would happen later, or we store the string for now
           })
+        } else {
+          const errData = await response.json().catch(() => ({}))
+          toast.error(`Gagal upload struk: ${errData.error || response.statusText}`)
         }
       } catch (error) {
         console.error("OCR Error:", error)
+        toast.error("Terjadi kesalahan sistem saat menghubungi server OCR.")
       }
     }
     
@@ -269,11 +276,10 @@ export default function NewReimbursementPage() {
                             onChange={(e) => updateItem(item.id, 'category', e.target.value)}
                             className="w-full p-2 border border-slate-200 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
                           >
-                            <option value="ATK">ATK</option>
-                            <option value="Air Minum">Air Minum</option>
-                            <option value="Transportasi">Transportasi</option>
-                            <option value="Konsumsi">Konsumsi</option>
-                            <option value="Lain-lain">Lain-lain</option>
+                            <option value="Lain-lain" disabled>Pilih Kategori</option>
+                            {EXPENSE_CATEGORIES.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
                           </select>
                         </td>
                         <td className="p-3">
