@@ -28,7 +28,7 @@ export default async function DashboardLayout({
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar isAdmin={isAdmin} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar user={profile} />
+        <Topbar user={profile} isAdmin={isAdmin} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto animate-fade-in">
             {children}

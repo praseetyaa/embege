@@ -5,6 +5,8 @@ import { toast } from "sonner"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 
+import { profileSchema } from "@/lib/validations"
+
 export function ProfileForm({ profile }: { profile: any }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
@@ -14,14 +16,24 @@ export function ProfileForm({ profile }: { profile: any }) {
     setIsSubmitting(true)
     
     const formData = new FormData(e.currentTarget)
-    const department = formData.get("department") as string
-    const bank_name = formData.get("bank_name") as string
-    const bank_account = formData.get("bank_account") as string
+    const data = {
+      department: formData.get("department") as string,
+      bank_name: formData.get("bank_name") as string,
+      bank_account: formData.get("bank_account") as string,
+    }
+
+    // 1. Validate with Zod
+    const result = profileSchema.safeParse(data)
+    if (!result.success) {
+      toast.error(result.error.errors[0].message)
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ department, bank_name, bank_account })
+        .update(data)
         .eq("id", profile.id)
 
       if (error) throw error
