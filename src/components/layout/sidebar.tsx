@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { 
-  LayoutDashboard, 
-  FileText, 
-  PlusCircle, 
-  User, 
+import {
+  LayoutDashboard,
+  FileText,
+  PlusCircle,
+  User,
   LogOut,
   Settings,
   ShieldCheck,
@@ -24,7 +24,7 @@ interface SidebarProps {
 type NavItem = {
   href?: string;
   label: string;
-  icon: any;
+  icon?: any;
   children?: { href: string; label: string; icon?: any }[];
 }
 
@@ -34,8 +34,8 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
   const userLinks: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { 
-      label: "Reimbursement", 
+    {
+      label: "Reimbursement",
       icon: Receipt,
       children: [
         { href: "/transactions/new", label: "Nota", icon: PlusCircle },
@@ -86,7 +86,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const renderLink = (link: NavItem, isChild = false) => {
     const Icon = link.icon
     let isActive = false
-    
+
     if (link.href) {
       isActive = pathname === link.href
       if (!isActive && link.href !== "/dashboard" && link.href !== "/admin") {
@@ -101,14 +101,14 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
     if (link.children) {
       const isOpen = openMenus[link.label]
-      
+
       const isAnyChildActive = link.children.some(child => {
-          let childActive = pathname === child.href
-          if (!childActive && child.href !== "/dashboard" && child.href !== "/admin") {
-            if (pathname.startsWith(child.href + "/")) childActive = true
-          }
-          if (child.href === "/transactions" && pathname.startsWith("/transactions/new")) childActive = false
-          return childActive
+        let childActive = pathname === child.href
+        if (!childActive && child.href !== "/dashboard" && child.href !== "/admin") {
+          if (pathname.startsWith(child.href + "/")) childActive = true
+        }
+        if (child.href === "/transactions" && pathname.startsWith("/transactions/new")) childActive = false
+        return childActive
       })
 
       return (
@@ -126,8 +126,8 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             </div>
             {isOpen ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
           </button>
-          
-          <div 
+
+          <div
             className={cn(
               "grid transition-all duration-200 ease-in-out",
               isOpen ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0"
@@ -163,8 +163,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
     <aside className="w-64 bg-[#0F172A] text-white hidden md:flex flex-col h-screen sticky top-0 left-0 border-r border-slate-800 print:hidden">
       <div className="p-6">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 tracking-tight">
-          REIMBURSE
+          Awoo
         </h1>
+        <span className="text-xs font-medium text-slate-400 mt-1 block">Tools buat yang mager kaya Isna</span>
         {isAdmin && <span className="text-xs font-medium text-amber-400 mt-1 block">Super Admin</span>}
       </div>
 
@@ -172,7 +173,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">
           Menu Utama
         </div>
-        
+
         {links.map((link) => renderLink(link))}
       </div>
 

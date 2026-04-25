@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
 import { formatCurrency } from "@/lib/utils"
 import Link from "next/link"
-import { 
-  FileText, 
-  Clock, 
-  CheckCircle, 
-  PlusCircle, 
+import {
+  FileText,
+  Clock,
+  CheckCircle,
+  PlusCircle,
   ChevronRight,
   TrendingUp,
   AlertCircle
@@ -14,7 +14,7 @@ import {
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  
+
   if (!user) return null
 
   // Fetch summary stats
@@ -46,9 +46,9 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
           <p className="text-slate-500">Ringkasan pengeluaran Anda</p>
         </div>
-        
-        <Link 
-          href="/new" 
+
+        <Link
+          href="/transactions/new"
           className="btn-primary shadow-sm shadow-blue-500/20"
         >
           <PlusCircle className="w-5 h-5" />
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
             Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        
+
         {(!recent || recent.length === 0) ? (
           <div className="p-12 text-center">
             <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-slate-100 shadow-sm">

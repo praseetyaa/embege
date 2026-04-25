@@ -4,6 +4,7 @@ export const profileSchema = z.object({
   department: z.string().min(1, "Departemen harus diisi"),
   bank_name: z.string().min(1, "Nama bank harus diisi"),
   bank_account: z.string().min(5, "Nomor rekening minimal 5 digit"),
+  signature_url: z.string().nullable().optional(),
 });
 
 export const reimbursementItemSchema = z.object({

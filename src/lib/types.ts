@@ -11,6 +11,7 @@ export interface Profile {
   department: string | null;
   bank_name: string | null;
   bank_account: string | null;
+  signature_url: string | null;
   created_at: string;
   updated_at: string;
 }

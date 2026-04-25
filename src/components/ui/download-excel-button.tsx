@@ -22,11 +22,11 @@ export function DownloadExcelButton({ reimbursement, className }: Props) {
   }
 
   return (
-    <button 
+    <button
       onClick={handleDownload}
       className={className || "btn-primary flex items-center justify-center gap-2 w-full"}
     >
-      <Download className="w-4 h-4" /> Download Excel
+      <Download className="w-4 h-4" /> Download&nbsp;Excel
     </button>
   )
 }

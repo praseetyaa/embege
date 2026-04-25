@@ -8,12 +8,12 @@ export function PrintPdfButton() {
   }
 
   return (
-    <button 
+    <button
       onClick={handlePrint}
-      className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-medium transition-colors print:hidden"
+      className="btn-primary flex items-center justify-center gap-2 w-full print:hidden"
     >
       <Printer className="w-4 h-4" />
-      Cetak PDF
+      Cetak&nbsp;PDF
     </button>
   )
 }
