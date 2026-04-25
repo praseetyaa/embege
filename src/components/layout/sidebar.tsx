@@ -22,8 +22,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
   const userLinks = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/new", label: "Buat Pengajuan", icon: PlusCircle },
-    { href: "/history", label: "Riwayat", icon: FileText },
+    { href: "/transactions/new", label: "Nota", icon: PlusCircle },
+    { href: "/transactions", label: "Transaksi", icon: FileText },
+    { href: "/history", label: "Pengajuan", icon: FileText },
     { href: "/profile", label: "Profil", icon: User },
   ]
 
@@ -52,7 +53,19 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         
         {links.map((link) => {
           const Icon = link.icon
-          const isActive = pathname === link.href || (link.href !== "/dashboard" && link.href !== "/admin" && pathname.startsWith(link.href))
+          let isActive = pathname === link.href
+          
+          if (!isActive && link.href !== "/dashboard" && link.href !== "/admin") {
+            // Check if it's a child route
+            if (pathname.startsWith(link.href + "/")) {
+              isActive = true
+            }
+          }
+          
+          // Special case to prevent /transactions from being active when on /transactions/new
+          if (link.href === "/transactions" && pathname.startsWith("/transactions/new")) {
+            isActive = false
+          }
           
           return (
             <Link

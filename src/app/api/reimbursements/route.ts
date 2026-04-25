@@ -85,24 +85,46 @@ export async function POST(request: Request) {
       throw reimbursementError
     }
 
-    // 2. Insert items
-    const itemsToInsert = items.map((item: any) => ({
-      reimbursement_id: reimbursement.id,
-      date: item.date,
-      description: item.description,
-      category_id: item.category_id,
-      vendor: item.vendor,
-      amount: item.amount,
-      receipt_url: item.receipt_url
-    }))
+    // Resolve category IDs
+    const { data: categories } = await supabase.from("categories").select("id, name")
+    const categoryMap: Record<string, string> = {}
+    categories?.forEach(c => categoryMap[c.name] = c.id)
 
-    const { error: itemsError } = await supabase
+    // 2. Update existing items
+    const itemsToUpdate = items.map((item: any) => {
+      let catId = item.category_id
+      // If user changed the category in the UI, it sends item.category. Override catId.
+      if (item.category && categoryMap[item.category]) {
+        catId = categoryMap[item.category]
+      }
+      return {
+        id: item.id, // Ensure we pass the ID to update existing rows
+        reimbursement_id: reimbursement.id,
+        user_id: user.id, // Need to include to satisfy RLS or not null constraint
+        date: item.date,
+        description: item.description,
+        category_id: catId || null, // fallback
+        vendor: item.vendor,
+        amount: item.amount,
+        receipt_url: item.receipt_url || null
+      }
+    })
+
+    // Use Admin client to bypass RLS since the reimbursement is auto-approved
+    // and the normal UPDATE policy prevents linking items to non-pending reimbursements.
+    const { createClient: createSupabaseClient } = require("@supabase/supabase-js");
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { error: itemsError } = await supabaseAdmin
       .from("reimbursement_items")
-      .insert(itemsToInsert)
+      .upsert(itemsToUpdate)
 
     if (itemsError) {
-      // Rollback if items fail (Supabase REST doesn't have transactions yet, but we should handle it better ideally via RPC)
-      await supabase.from("reimbursements").delete().eq("id", reimbursement.id)
+      // Rollback if items fail
+      await supabaseAdmin.from("reimbursements").delete().eq("id", reimbursement.id)
       throw itemsError
     }
 

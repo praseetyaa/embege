@@ -55,7 +55,7 @@ export async function POST(request: Request) {
             content: [
               {
                 type: "text",
-                text: "Ekstrak informasi dari struk/nota ini dalam format JSON. Ekstrak data berikut:\n1. date (format YYYY-MM-DD, jika tidak ada gunakan tanggal hari ini)\n2. description (keterangan item atau keperluan secara singkat)\n3. category (pilih salah satu: 'ATK', 'Air Minum', 'Transportasi', 'Konsumsi', atau 'Lain-lain')\n4. vendor (nama toko/merchant)\n5. amount (total harga dalam angka saja tanpa pemisah ribuan, misal 150000)\n\nHanya kembalikan JSON raw tanpa markdown formatting atau teks lain. Jika tidak terbaca, coba tebak sebaik mungkin."
+                text: "Ekstrak informasi dari struk/nota ini dalam format JSON. Ekstrak data sebagai sebuah array bernama 'items'. Jika ada banyak barang yang dibeli di dalam satu nota, buatkan setiap barang menjadi satu objek di dalam array 'items'.\n\nUntuk setiap item ekstrak:\n1. date (format YYYY-MM-DD, jika tidak ada gunakan tanggal hari ini, samakan untuk semua item di nota yang sama)\n2. description (nama barang yang dibeli atau keperluan)\n3. category (pilih salah satu: 'ATK', 'Air Minum', 'Transportasi', 'Konsumsi', atau 'Lain-lain')\n4. vendor (nama toko/merchant, samakan untuk semua item di nota yang sama)\n5. amount (harga total untuk item tersebut dalam angka saja tanpa pemisah ribuan)\n\nKembalikan HANYA JSON raw dengan format:\n{\n  \"items\": [\n    { \"date\": \"...\", \"description\": \"...\", \"category\": \"...\", \"vendor\": \"...\", \"amount\": ... }\n  ]\n}"
               },
               {
                 type: "image_url",
@@ -78,20 +78,31 @@ export async function POST(request: Request) {
       let parsedData;
       try {
         parsedData = JSON.parse(cleanedContent)
+        // Ensure it has items array
+        if (!parsedData.items || !Array.isArray(parsedData.items)) {
+           // If the AI returned a single object, wrap it in items
+           if (parsedData.description || parsedData.amount) {
+             parsedData = { items: [parsedData] }
+           } else {
+             throw new Error("Invalid format")
+           }
+        }
       } catch (e) {
         console.error("Failed to parse JSON:", content)
         // Fallback generic data
         parsedData = {
-          date: new Date().toISOString().split('T')[0],
-          description: "Struk Pembelian",
-          category: "Lain-lain",
-          vendor: "Vendor",
-          amount: 0
+          items: [{
+            date: new Date().toISOString().split('T')[0],
+            description: "Struk Pembelian",
+            category: "Lain-lain",
+            vendor: "Vendor",
+            amount: 0
+          }]
         }
       }
 
       return NextResponse.json({
-        ...parsedData,
+        items: parsedData.items,
         receipt_url: publicUrl
       })
 
@@ -99,11 +110,13 @@ export async function POST(request: Request) {
       console.error("Vision API Error:", visionError)
       // Return the uploaded URL anyway so user can manually input
       return NextResponse.json({ 
-        date: new Date().toISOString().split('T')[0],
-        description: "",
-        category: "Lain-lain",
-        vendor: "",
-        amount: 0,
+        items: [{
+          date: new Date().toISOString().split('T')[0],
+          description: "",
+          category: "Lain-lain",
+          vendor: "",
+          amount: 0,
+        }],
         receipt_url: publicUrl,
         error: "OCR failed, please input manually"
       })

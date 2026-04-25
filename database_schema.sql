@@ -51,7 +51,8 @@ CREATE TABLE reimbursements (
 -- Create Reimbursement Items Table
 CREATE TABLE reimbursement_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  reimbursement_id UUID REFERENCES reimbursements(id) ON DELETE CASCADE NOT NULL,
+  reimbursement_id UUID REFERENCES reimbursements(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   date DATE NOT NULL,
   description TEXT NOT NULL,
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
@@ -94,16 +95,22 @@ CREATE POLICY "Super admins can update all reimbursements" ON reimbursements FOR
 
 -- Reimbursement Items: Users can CRUD own, Admins can do all
 CREATE POLICY "Users can view own reimbursement items" ON reimbursement_items FOR SELECT USING (
-  EXISTS (SELECT 1 FROM reimbursements WHERE id = reimbursement_id AND user_id = auth.uid())
+  user_id = auth.uid()
 );
 CREATE POLICY "Users can insert own reimbursement items" ON reimbursement_items FOR INSERT WITH CHECK (
-  EXISTS (SELECT 1 FROM reimbursements WHERE id = reimbursement_id AND user_id = auth.uid())
+  user_id = auth.uid()
 );
 CREATE POLICY "Users can update own pending reimbursement items" ON reimbursement_items FOR UPDATE USING (
-  EXISTS (SELECT 1 FROM reimbursements WHERE id = reimbursement_id AND user_id = auth.uid() AND status = 'pending')
+  user_id = auth.uid() AND (
+    reimbursement_id IS NULL OR 
+    EXISTS (SELECT 1 FROM reimbursements WHERE id = reimbursement_id AND status = 'pending')
+  )
 );
 CREATE POLICY "Users can delete own pending reimbursement items" ON reimbursement_items FOR DELETE USING (
-  EXISTS (SELECT 1 FROM reimbursements WHERE id = reimbursement_id AND user_id = auth.uid() AND status = 'pending')
+  user_id = auth.uid() AND (
+    reimbursement_id IS NULL OR 
+    EXISTS (SELECT 1 FROM reimbursements WHERE id = reimbursement_id AND status = 'pending')
+  )
 );
 
 CREATE POLICY "Super admins can view all reimbursement items" ON reimbursement_items FOR SELECT USING (
