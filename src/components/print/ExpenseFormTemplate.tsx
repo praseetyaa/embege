@@ -89,7 +89,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
   const amtCell = (cats: string[], rs = 1) => {
     const sum = cats.reduce((a, c) => a + (amountsByCategory[c] || 0), 0)
     return (
-      <td rowSpan={rs} style={{ border: bc, padding: '2px 4px', textAlign: 'right', verticalAlign: 'bottom', color: BLK, fontSize: '10px' }}>
+      <td rowSpan={rs} style={{ border: bc, padding: '2px 4px', textAlign: 'right', verticalAlign: 'bottom', color: BLK, fontSize: '11px' }}>
         {sum > 0 ? sum.toLocaleString('id-ID') : ''}
       </td>
     )
@@ -122,7 +122,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
           html { margin: 0; }
         }
       `}} />
-      <div style={{ width: '287mm', margin: '0 auto', background: '#fff', fontFamily: 'Arial, sans-serif', padding: '4mm 2mm', fontSize: '10px' }} className="print:block hidden">
+      <div style={{ width: '320mm', margin: '0 auto', background: '#fff', fontFamily: 'Arial, sans-serif', padding: '15mm 10mm', fontSize: '10px' }} className="print:block hidden">
         <table style={{ width: '100%', borderCollapse: 'collapse', border: bc2, tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: '12%' }} />
@@ -360,7 +360,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
             {/* Row 16 - Cost reasons */}
             <tr>
               {emptyCell(1)}
-              <td colSpan={4} rowSpan={3} style={{ border: bc, padding: '3px', color: P, fontSize: '9px' }}>
+              <td colSpan={4} rowSpan={3} style={{ border: bc, padding: '3px', color: P, fontSize: '11px' }}>
                 <div>Cost reasons and completion</div>
                 <div>费用支出原因及完成情况</div>
                 <div style={{ color: BLK }}>{costReasons}</div>
@@ -391,13 +391,13 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
             {/* Row 19 - Total */}
             <tr>
               {emptyCell()}
-              <td colSpan={4} style={{ border: bc, padding: '3px 6px', color: P, fontSize: '10px' }}>
+              <td colSpan={4} style={{ border: bc, padding: '3px 6px', color: P, fontSize: '11px' }}>
                 合计（大写）total (words)：<span style={{ color: BLK }}>{totalInWords}</span>
               </td>
               <td style={{ border: bc, padding: '3px', color: P, fontSize: '9px', textAlign: 'center' }}>
                 合计（小写）total（figures)
               </td>
-              <td colSpan={1} style={{ border: bc, padding: '3px 8px', textAlign: 'right', color: BLK, fontSize: '13px' }}>
+              <td colSpan={1} style={{ border: bc, padding: '3px 8px', textAlign: 'right', color: BLK, fontSize: '11px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><div>Rp</div><div>{reimbursement.total_amount?.toLocaleString('id-ID')}</div></div>
               </td>
             </tr>

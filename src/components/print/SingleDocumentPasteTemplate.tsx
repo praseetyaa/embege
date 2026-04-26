@@ -32,7 +32,7 @@ export function SingleDocumentPasteTemplate({ reimbursement }: PrintTemplateProp
           html { margin: 0; }
         }
       `}} />
-      <div style={{ width: '287mm', margin: '0 auto', background: '#fff', fontFamily: 'Arial, sans-serif', paddingTop: '50mm' }} className="print:block hidden">
+      <div style={{ width: '310mm', margin: '0 auto', background: '#fff', fontFamily: 'Arial, sans-serif', paddingTop: '20mm', paddingLeft: '12mm' }} className="print:block hidden">
         {/* Title */}
         <div style={{ textAlign: 'center', marginBottom: '12px' }}>
           <h2 style={{ fontSize: '20px', letterSpacing: '6px', color: P, margin: 0 }}>单据粘贴单</h2>
@@ -54,23 +54,23 @@ export function SingleDocumentPasteTemplate({ reimbursement }: PrintTemplateProp
             </tr>
             {/* Header row 2 */}
             <tr>
-              <td style={{ border: bc, padding: '8px', textAlign: 'center', color: P, fontSize: '9px', width: '7.5%' }}>
+              <td style={{ border: bc, padding: '8px', textAlign: 'center', color: P, fontSize: '11px', width: '7.5%' }}>
                 <div>month</div><div>月</div>
               </td>
-              <td style={{ border: bc, padding: '8px', textAlign: 'center', color: P, fontSize: '9px', width: '7.5%' }}>
+              <td style={{ border: bc, padding: '8px', textAlign: 'center', color: P, fontSize: '11px', width: '7.5%' }}>
                 <div>day</div><div>日</div>
               </td>
             </tr>
             {/* Data row */}
             <tr>
               <td style={{ border: bc, padding: '16px', height: '100px' }}></td>
-              <td style={{ border: bc, padding: '12px', textAlign: 'center', fontSize: '9px', color: BLK }}>
+              <td style={{ border: bc, padding: '12px', textAlign: 'center', fontSize: '11px', color: BLK }}>
                 {month}
               </td>
-              <td style={{ border: bc, padding: '12px', textAlign: 'center', fontSize: '9px', color: BLK }}>
+              <td style={{ border: bc, padding: '12px', textAlign: 'center', fontSize: '11px', color: BLK }}>
                 {day}
               </td>
-              <td style={{ border: bc, padding: '16px', textAlign: 'center', color: BLK, fontSize: '9px', verticalAlign: 'middle', lineHeight: '1.6' }}>
+              <td style={{ border: bc, padding: '16px', textAlign: 'center', color: BLK, fontSize: '11px', verticalAlign: 'middle', lineHeight: '1.6' }}>
                 {costReasons}
               </td>
             </tr>
