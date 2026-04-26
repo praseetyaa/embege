@@ -11,9 +11,9 @@ export const reimbursementItemSchema = z.object({
   id: z.string().optional(),
   date: z.string(),
   description: z.string().min(1, "Keterangan harus diisi"),
-  category: z.string().optional(),
-  category_id: z.string().optional(),
-  vendor: z.string().optional(),
+  category: z.string().nullable().optional(),
+  category_id: z.string().nullable().optional(),
+  vendor: z.string().nullable().optional(),
   amount: z.coerce.number().positive("Nominal harus positif"),
 });
 
