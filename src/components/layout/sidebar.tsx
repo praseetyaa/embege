@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   Receipt,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Package
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -43,6 +44,14 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         { href: "/history", label: "Pengajuan", icon: FileText },
       ]
     },
+    {
+      label: "Permintaan ATK",
+      icon: Package,
+      children: [
+        { href: "/asset-requests/new", label: "Buat Baru", icon: PlusCircle },
+        { href: "/asset-requests", label: "Riwayat", icon: FileText },
+      ]
+    },
     { href: "/profile", label: "Profil", icon: User },
   ]
 
@@ -63,6 +72,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       if (link.children) {
         const isActive = link.children.some(child => {
           if (child.href === "/transactions" && pathname.startsWith("/transactions/new")) return false
+          if (child.href === "/asset-requests" && pathname.startsWith("/asset-requests/new")) return false
           if (pathname === child.href) return true
           if (pathname.startsWith(child.href + "/")) return true
           return false
@@ -97,6 +107,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       if (link.href === "/transactions" && pathname.startsWith("/transactions/new")) {
         isActive = false
       }
+      if (link.href === "/asset-requests" && pathname.startsWith("/asset-requests/new")) {
+        isActive = false
+      }
     }
 
     if (link.children) {
@@ -108,6 +121,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           if (pathname.startsWith(child.href + "/")) childActive = true
         }
         if (child.href === "/transactions" && pathname.startsWith("/transactions/new")) childActive = false
+        if (child.href === "/asset-requests" && pathname.startsWith("/asset-requests/new")) childActive = false
         return childActive
       })
 
@@ -162,11 +176,16 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   return (
     <aside className="w-64 bg-[#0F172A] text-white hidden md:flex flex-col h-screen sticky top-0 left-0 border-r border-slate-800 print:hidden">
       <div className="p-6">
-        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 tracking-tight">
-          Awoo
-        </h1>
-        <span className="text-xs font-medium text-slate-400 mt-1 block">Tools buat yang mager kaya Isna</span>
-        {isAdmin && <span className="text-xs font-medium text-amber-400 mt-1 block">Super Admin</span>}
+        <div className="flex items-center gap-3">
+          <img src="/awoo-logo.png" alt="Awoo Logo" className="h-10 w-auto shrink-0" />
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 tracking-tight leading-none">
+              Awoo
+            </h1>
+            <span className="text-[10px] font-medium text-slate-400 mt-1 leading-tight">Tools buat yang mager kaya Isna</span>
+          </div>
+        </div>
+        {isAdmin && <span className="text-xs font-medium text-amber-400 mt-3 block">Super Admin</span>}
       </div>
 
       <div className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">

@@ -134,3 +134,56 @@ CREATE TRIGGER update_reimbursements_updated_at BEFORE UPDATE ON reimbursements 
 -- insert into storage.buckets (id, name, public) values ('receipts', 'receipts', true);
 -- CREATE POLICY "Anyone can read receipts" ON storage.objects FOR SELECT USING (bucket_id = 'receipts');
 -- CREATE POLICY "Authenticated users can upload receipts" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'receipts' AND auth.role() = 'authenticated');
+
+-- Create Asset Requests Table
+CREATE TABLE asset_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  reg_form_no TEXT DEFAULT 'GA01',
+  request_date DATE NOT NULL,
+  department TEXT,
+  area TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create Asset Request Items Table
+CREATE TABLE asset_request_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id UUID REFERENCES asset_requests(id) ON DELETE CASCADE NOT NULL,
+  item_name TEXT NOT NULL,
+  specification TEXT,
+  quantity DECIMAL(12, 2) DEFAULT 1,
+  image_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS Policies for Asset Requests
+ALTER TABLE asset_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_request_items ENABLE ROW LEVEL SECURITY;
+
+-- Asset Requests: Users can CRUD own, Admins can do all
+CREATE POLICY "Users can view own asset requests" ON asset_requests FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own asset requests" ON asset_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own asset requests" ON asset_requests FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own asset requests" ON asset_requests FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Super admins can view all asset requests" ON asset_requests FOR SELECT USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+);
+
+-- Asset Request Items: Users can CRUD own items via request_id
+CREATE POLICY "Users can view own asset request items" ON asset_request_items FOR SELECT USING (
+  EXISTS (SELECT 1 FROM asset_requests WHERE id = request_id AND user_id = auth.uid())
+);
+CREATE POLICY "Users can insert own asset request items" ON asset_request_items FOR INSERT WITH CHECK (
+  EXISTS (SELECT 1 FROM asset_requests WHERE id = request_id AND user_id = auth.uid())
+);
+CREATE POLICY "Users can update own asset request items" ON asset_request_items FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM asset_requests WHERE id = request_id AND user_id = auth.uid())
+);
+CREATE POLICY "Users can delete own asset request items" ON asset_request_items FOR DELETE USING (
+  EXISTS (SELECT 1 FROM asset_requests WHERE id = request_id AND user_id = auth.uid())
+);
+
+CREATE TRIGGER update_asset_requests_updated_at BEFORE UPDATE ON asset_requests FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();

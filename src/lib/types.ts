@@ -74,3 +74,28 @@ export interface Notification {
   reimbursement_id: string | null;
   created_at: string;
 }
+
+export interface AssetRequest {
+  id: string;
+  user_id: string;
+  reg_form_no: string;
+  request_date: string;
+  department: string | null;
+  area: string | null;
+  created_at: string;
+  updated_at: string;
+  
+  // Joined data
+  profiles?: Profile;
+  asset_request_items?: AssetRequestItem[];
+}
+
+export interface AssetRequestItem {
+  id: string;
+  request_id: string;
+  item_name: string;
+  specification: string | null;
+  quantity: number;
+  image_url: string | null;
+  created_at: string;
+}

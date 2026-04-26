@@ -18,7 +18,6 @@ export default async function DashboardPage() {
   if (!user) return null
 
   // Fetch summary stats
-  // We'll use mock numbers if DB is empty or fails
   const { data: reimbursements } = await supabase
     .from("reimbursements")
     .select("status, total_amount")
@@ -39,6 +38,40 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(5)
 
+  // Reminder Logic: Check for unassigned transactions older than 15 days
+  const fifteenDaysAgo = new Date()
+  fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15)
+  
+  const { count: oldTransactionsCount } = await supabase
+    .from("reimbursement_items")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .is("reimbursement_id", null)
+    .lt("created_at", fifteenDaysAgo.toISOString())
+
+  if (oldTransactionsCount && oldTransactionsCount > 0) {
+    // Check if we already notified recently (last 3 days) to avoid spam
+    const threeDaysAgo = new Date()
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
+
+    const { data: existingNotif } = await supabase
+      .from("notifications")
+      .select("id")
+      .eq("user_id", user.id)
+      .like("title", "%Reminder: Nota%")
+      .gte("created_at", threeDaysAgo.toISOString())
+      .limit(1)
+
+    if (!existingNotif || existingNotif.length === 0) {
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        title: "Reminder: Nota Belum Diajukan",
+        message: `Anda memiliki ${oldTransactionsCount} nota transaksi yang sudah lebih dari 15 hari belum diajukan. Segera buat pengajuan reimbursement!`,
+        is_read: false
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -55,6 +88,26 @@ export default async function DashboardPage() {
           Catat Pengeluaran Baru
         </Link>
       </div>
+
+      {/* Reminder Banner */}
+      {oldTransactionsCount && oldTransactionsCount > 0 ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-bold text-amber-800">Reminder Pengajuan</h3>
+            <p className="text-sm text-amber-700 mt-1">
+              Anda memiliki <strong>{oldTransactionsCount} nota</strong> yang sudah mengendap lebih dari 15 hari. 
+              Segera kelompokkan nota tersebut menjadi sebuah pengajuan reimbursement.
+            </p>
+            <Link 
+              href="/transactions" 
+              className="inline-block mt-2 text-sm font-semibold text-amber-700 hover:text-amber-900 underline"
+            >
+              Buat Pengajuan Sekarang
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -82,7 +135,7 @@ export default async function DashboardPage() {
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
           <div className="relative z-10">
             <div className="flex justify-between items-start mb-4">
-              <div>
+               <div>
                 <p className="text-sm font-medium text-emerald-50 mb-1">Total Pengeluaran</p>
                 <h3 className="text-3xl font-bold text-white truncate">{formatCurrency(stats.totalValue)}</h3>
               </div>
@@ -110,7 +163,7 @@ export default async function DashboardPage() {
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Belum ada catatan</h3>
             <p className="text-slate-500 mb-6 max-w-sm mx-auto">Anda belum pernah mencatat pengeluaran. Mulai scan struk Anda sekarang.</p>
-            <Link href="/new" className="btn-primary">
+            <Link href="/transactions/new" className="btn-primary">
               Catat Pengeluaran Pertama
             </Link>
           </div>

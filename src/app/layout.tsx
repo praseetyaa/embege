@@ -4,10 +4,15 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "REIMBURSE — Smart Receipt Scanner & Reimbursement Generator",
+  title: "Awoo — Smart Receipt Scanner & Reimbursement Generator",
   description:
     "Upload nota, AI baca otomatis, dan hasilkan form reimbursement Excel siap cetak. Cepat, akurat, tanpa input manual.",
   keywords: "reimbursement, receipt scanner, OCR, nota, pengajuan, Excel",
+  icons: {
+    icon: "/awoo-logo.png",
+    shortcut: "/awoo-logo.png",
+    apple: "/awoo-logo.png",
+  },
 };
 
 export default function RootLayout({
