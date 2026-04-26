@@ -8,7 +8,10 @@ import {
   PlusCircle,
   ChevronRight,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Package,
+  Receipt,
+  ArrowRight
 } from "lucide-react"
 
 export default async function DashboardPage() {
@@ -25,10 +28,15 @@ export default async function DashboardPage() {
 
   const stats = reimbursements?.reduce((acc, curr) => {
     acc.total++
-    // In personal mode, all reimbursements count towards total value
     acc.totalValue += Number(curr.total_amount)
     return acc
   }, { total: 0, totalValue: 0 }) || { total: 0, totalValue: 0 }
+
+  // Fetch Asset Requests count
+  const { count: assetRequestsCount } = await supabase
+    .from("asset_requests")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
 
   // Fetch recent reimbursements
   const { data: recent } = await supabase
@@ -50,7 +58,6 @@ export default async function DashboardPage() {
     .lt("created_at", fifteenDaysAgo.toISOString())
 
   if (oldTransactionsCount && oldTransactionsCount > 0) {
-    // Check if we already notified recently (last 3 days) to avoid spam
     const threeDaysAgo = new Date()
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
 
@@ -73,140 +80,172 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-500">Ringkasan pengeluaran Anda</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
+          <p className="text-slate-500 mt-1">Selamat datang kembali! Berikut ringkasan aktivitas Anda.</p>
         </div>
 
-        <Link
-          href="/transactions/new"
-          className="btn-primary shadow-sm shadow-blue-500/20"
-        >
-          <PlusCircle className="w-5 h-5" />
-          Catat Pengeluaran Baru
-        </Link>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Link
+            href="/transactions/new"
+            className="flex-1 sm:flex-none btn-primary shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-600 to-indigo-600 border-none hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            <PlusCircle className="w-5 h-5 mr-2" />
+            Input Nota
+          </Link>
+          <Link
+            href="/asset-requests/new"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"
+          >
+            <Package className="w-5 h-5 mr-2 text-amber-500" />
+            Request ATK
+          </Link>
+        </div>
       </div>
 
       {/* Reminder Banner */}
       {oldTransactionsCount && oldTransactionsCount > 0 ? (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-          <div>
-            <h3 className="text-sm font-bold text-amber-800">Reminder Pengajuan</h3>
-            <p className="text-sm text-amber-700 mt-1">
-              Anda memiliki <strong>{oldTransactionsCount} nota</strong> yang sudah mengendap lebih dari 15 hari. 
-              Segera kelompokkan nota tersebut menjadi sebuah pengajuan reimbursement.
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="p-2 bg-amber-100 rounded-lg">
+            <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-bold text-amber-800">Reminder Pengajuan Reimbursement</h3>
+            <p className="text-sm text-amber-700 mt-1 leading-relaxed">
+              Ada <strong>{oldTransactionsCount} nota</strong> yang sudah mengendap lebih dari 15 hari. 
+              Segera kelompokkan nota tersebut menjadi sebuah pengajuan agar proses reimbursement lebih cepat.
             </p>
             <Link 
               href="/transactions" 
-              className="inline-block mt-2 text-sm font-semibold text-amber-700 hover:text-amber-900 underline"
+              className="inline-flex items-center mt-3 text-sm font-bold text-amber-800 hover:text-amber-900 group"
             >
-              Buat Pengajuan Sekarang
+              Lihat Nota Sekarang
+              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>
       ) : null}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm card-hover relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5">
-            <FileText className="w-24 h-24" />
-          </div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div>
-              <p className="text-sm font-medium text-slate-500 mb-1">Total Transaksi</p>
-              <h3 className="text-3xl font-bold text-slate-900">{stats.total}</h3>
-            </div>
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-              <FileText className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-sm text-blue-600 flex items-center gap-1 font-medium relative z-10">
-            <TrendingUp className="w-4 h-4" />
-            <span>Semua waktu</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm card-hover relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-700 opacity-[0.98]"></div>
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-               <div>
-                <p className="text-sm font-medium text-emerald-50 mb-1">Total Pengeluaran</p>
-                <h3 className="text-3xl font-bold text-white truncate">{formatCurrency(stats.totalValue)}</h3>
+      {/* Main Stats - Row 1 (1 Col) */}
+      <div className="w-full">
+        <div className="relative bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden group p-8 min-h-[180px] flex flex-col justify-center">
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full -mr-20 -mt-20 blur-3xl opacity-60"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-50 rounded-full -ml-16 -mb-16 blur-3xl opacity-60"></div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm uppercase tracking-wider">
+                <TrendingUp className="w-4 h-4" />
+                <span>Total Pengeluaran</span>
               </div>
+              <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">
+                {formatCurrency(stats.totalValue)}
+              </h2>
+              <p className="text-slate-400 text-sm font-medium">Akumulasi seluruh pengajuan reimbursement yang telah dicatat</p>
             </div>
-            <div className="text-sm text-emerald-100 flex items-center gap-1">
-              <span>Semua waktu</span>
+            
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-[1px] bg-slate-100 hidden md:block"></div>
+              <Link href="/history" className="group/btn flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20">
+                Lihat Detail Riwayat
+                <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Submissions */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden animate-slide-up stagger-1">
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-          <h2 className="text-lg font-semibold text-slate-900">Catatan Terakhir</h2>
-          <Link href="/history" className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
-            Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
+      {/* Row 2 (2 Cols) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Total Transaksi */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center gap-6 group">
+          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+            <Receipt className="w-8 h-8 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Total Pengajuan</p>
+            <h3 className="text-3xl font-black text-slate-900 tracking-tight">{stats.total}</h3>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Dokumen Reimbursement</p>
+          </div>
+        </div>
+
+        {/* Total Permintaan ATK */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center gap-6 group">
+          <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+            <Package className="w-8 h-8 text-amber-600" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Permintaan ATK</p>
+            <h3 className="text-3xl font-black text-slate-900 tracking-tight">{assetRequestsCount || 0}</h3>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Total Pengajuan ATK</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity Section */}
+      <div className="space-y-4 pt-4">
+        <div className="flex items-center justify-between px-2">
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Aktivitas Terakhir</h2>
+          <Link href="/history" className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+            Lihat Semua <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
-        {(!recent || recent.length === 0) ? (
-          <div className="p-12 text-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-slate-100 shadow-sm">
-              <FileText className="w-10 h-10 text-slate-400" />
+        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+          {(!recent || recent.length === 0) ? (
+            <div className="p-16 text-center">
+              <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
+                <FileText className="w-10 h-10 text-slate-300" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Belum ada aktivitas</h3>
+              <p className="text-slate-500 mb-8 max-w-xs mx-auto">Anda belum pernah mencatat pengeluaran. Mulai scan struk Anda sekarang.</p>
+              <Link href="/transactions/new" className="btn-primary inline-flex items-center px-8">
+                <PlusCircle className="w-5 h-5 mr-2" />
+                Input Nota Pertama
+              </Link>
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Belum ada catatan</h3>
-            <p className="text-slate-500 mb-6 max-w-sm mx-auto">Anda belum pernah mencatat pengeluaran. Mulai scan struk Anda sekarang.</p>
-            <Link href="/transactions/new" className="btn-primary">
-              Catat Pengeluaran Pertama
-            </Link>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Periode</th>
-                  <th>Keterangan</th>
-                  <th>Total</th>
-                  <th>Tanggal Dicatat</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map((item) => (
-                  <tr key={item.id} className="group cursor-pointer hover:bg-slate-50 transition-colors">
-                    <td className="font-medium text-blue-600 group-hover:text-blue-700">
-                      <Link href={`/history/${item.id}`} className="flex items-center gap-2">
-                        #{item.id.substring(0, 8)}
-                      </Link>
-                    </td>
-                    <td>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-800">
-                        {item.period}
-                      </span>
-                    </td>
-                    <td className="text-slate-700 font-medium">{item.title}</td>
-                    <td className="font-semibold text-slate-900">{formatCurrency(item.total_amount)}</td>
-                    <td className="text-slate-500">
-                      {new Date(item.created_at).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </td>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/30">
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">ID / Periode</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Keterangan</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Total Nominal</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {recent.map((item) => (
+                    <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-5">
+                        <Link href={`/history/${item.id}`} className="block">
+                          <span className="text-sm font-black text-blue-600 group-hover:underline">#{item.id.substring(0, 8)}</span>
+                          <span className="block text-[10px] font-bold text-slate-400 mt-0.5">{item.period}</span>
+                        </Link>
+                      </td>
+                      <td className="px-6 py-5 font-bold text-slate-700">{item.title}</td>
+                      <td className="px-6 py-5">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                          item.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                          item.status === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                          item.status === 'rejected' ? 'bg-red-50 text-red-700 border border-red-100' :
+                          'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5 text-right font-black text-slate-900">{formatCurrency(item.total_amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
