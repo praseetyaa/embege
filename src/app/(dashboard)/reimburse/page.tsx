@@ -19,13 +19,19 @@ export default async function ReimbursePage({
 
   if (!user) return null
 
-  // Fetch the selected items
-  const { data: items } = await supabase
+  // Fetch the selected items — join categories so we get the name back
+  const { data: rawItems } = await supabase
     .from("reimbursement_items")
-    .select("*")
+    .select("*, categories(id, name)")
     .in("id", itemIds)
     .eq("user_id", user.id)
     .is("reimbursement_id", null) // Only allow unassigned items
+
+  // Map category name back onto item so the form dropdown can display it
+  const items = rawItems?.map((item: any) => ({
+    ...item,
+    category: item.categories?.name || item.category || "",
+  }))
 
   if (!items || items.length === 0) {
     redirect("/transactions")
