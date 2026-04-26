@@ -15,19 +15,19 @@ export const EXPENSE_CATEGORIES = [
   "internet",
   "supplies",
   "Tax Reklame",
-  // FIXED ASSETS&PREPAID EXPENSES
+  // FIXED ASSETS & PREPAID EXPENSES
   "vehicle",
   "computer",
   "printer",
   "projector",
   "office furniture",
   "office appliances",
-  "exhibitions (FA)",
-  "space branding rent (FA)",
-  "operating rental (FA)",
-  "office rent (Prepaid)",
-  "warehouse rent (Prepaid)",
-  "property management (Prepaid)",
+  "exhibitions",
+  "space branding ren",
+  "operating rental",
+  "office rent",
+  "warehouse rent",
+  "property management",
   "vehicle rent",
   "asset insurance",
   "mobil insurance",
@@ -48,7 +48,7 @@ export const EXPENSE_CATEGORIES = [
   "Service fee",
   "allowance",
   "Transportation",
-  "Hotel",
+  "hotel",
   "taxi",
   "Bonus",
   // MARKETING EXPENSES
@@ -69,5 +69,5 @@ export const EXPENSE_CATEGORIES = [
   "meeting-meals",
   "meeting-accommodation",
   "meeting-rental",
-  "meeting-gift"
+  "meeting-gift",
 ]
