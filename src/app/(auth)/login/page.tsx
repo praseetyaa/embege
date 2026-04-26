@@ -16,11 +16,11 @@ export default async function LoginPage() {
   // But this is a server component, we can't use window.location
   // We'll use a server action or a client component for the button.
   // Actually, let's use a client component for the login button so we can handle the OAuth redirect properly.
-  
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-slate-950">
       {/* Left side - Branding & Features */}
-      <div className="flex-1 p-8 md:p-12 lg:p-24 text-white flex flex-col justify-center relative overflow-hidden bg-[#0A192F]">
+      <div className="flex-1 p-8 md:p-12 lg:p-24 hidden md:block text-white flex flex-col justify-center relative overflow-hidden bg-[#0A192F]">
         {/* Animated Background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
           <div className="absolute -top-32 -left-32 w-[30rem] h-[30rem] rounded-full bg-blue-500/20 blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
@@ -33,9 +33,9 @@ export default async function LoginPage() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
             <span className="text-xs font-semibold tracking-wider text-blue-100 uppercase">Sistem Reimbursement Modern</span>
           </div>
-          
+
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-blue-300">
-            REIMBURSE
+            Awoo
           </h1>
           <p className="text-lg md:text-xl text-blue-100/80 mb-12 font-light leading-relaxed">
             Cara cerdas untuk memindai struk, melacak pengeluaran, dan menghasilkan rekap otomatis tanpa pusing.
@@ -79,13 +79,11 @@ export default async function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-8 bg-slate-50 dark:bg-slate-950 relative">
         {/* Subtle dot pattern background for right side */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMCwgMCwgMCwgMC4wNSkiLz48L3N2Zz4=')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNSkiLz48L3N2Zz4=')] z-0"></div>
-        
+
         <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 md:p-10 rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] border border-slate-100 dark:border-slate-800 relative z-10 backdrop-blur-xl">
           <div className="mb-10 text-center">
-            <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-blue-100 dark:border-blue-500/20">
-              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-blue-100 dark:border-blue-500/20">
+              <img src="/awoo-logo.png" alt="Awoo Logo" className="w-auto shrink-0" />
             </div>
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">Selamat Datang</h2>
             <p className="text-slate-500 dark:text-slate-400">Silakan masuk menggunakan akun Google workspace perusahaan Anda</p>
@@ -133,7 +131,7 @@ export default async function LoginPage() {
 async function signInWithGoogle() {
   "use server"
   const supabase = await createClient()
-  
+
   // Need to get the base URL for redirecting correctly
   const headers = await import('next/headers')
   const host = (await headers.headers()).get('host')
