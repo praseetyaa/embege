@@ -89,7 +89,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
   const amtCell = (cats: string[], rs = 1) => {
     const sum = cats.reduce((a, c) => a + (amountsByCategory[c] || 0), 0)
     return (
-      <td rowSpan={rs} style={{ border: bc, padding: '2px 4px', textAlign: 'right', verticalAlign: 'bottom', color: BLK, fontSize: '10px', backgroundColor: sum > 0 ? BG : 'transparent' }}>
+      <td rowSpan={rs} style={{ border: bc, padding: '2px 4px', textAlign: 'right', verticalAlign: 'bottom', color: BLK, fontSize: '10px' }}>
         {sum > 0 ? sum.toLocaleString('id-ID') : ''}
       </td>
     )
