@@ -7,6 +7,7 @@ import { ArrowLeft, Download, FileText, User, Building, CreditCard } from "lucid
 import { DownloadExcelButton } from "@/components/ui/download-excel-button"
 import { ExpenseFormTemplate } from "@/components/print/ExpenseFormTemplate"
 import { SingleDocumentPasteTemplate } from "@/components/print/SingleDocumentPasteTemplate"
+import { EvidencePhotosTemplate } from "@/components/print/EvidencePhotosTemplate"
 
 export default async function AdminSubmissionDetail({ params }: { params: Promise<{ id: string }> }) {
   const p = await params
@@ -150,6 +151,8 @@ export default async function AdminSubmissionDetail({ params }: { params: Promis
         <ExpenseFormTemplate reimbursement={reimbursement} />
         <div className="break-before-page"></div>
         <SingleDocumentPasteTemplate reimbursement={reimbursement} />
+        {/* EvidencePhotosTemplate handles its own break-before-page internally */}
+        <EvidencePhotosTemplate reimbursement={reimbursement} />
       </div>
     </>
   )

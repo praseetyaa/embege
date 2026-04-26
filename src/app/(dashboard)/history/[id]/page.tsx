@@ -7,6 +7,7 @@ import { DownloadExcelButton } from "@/components/ui/download-excel-button"
 import { PrintPdfButton } from "@/components/ui/print-pdf-button"
 import { ExpenseFormTemplate } from "@/components/print/ExpenseFormTemplate"
 import { SingleDocumentPasteTemplate } from "@/components/print/SingleDocumentPasteTemplate"
+import { EvidencePhotosTemplate } from "@/components/print/EvidencePhotosTemplate"
 
 export default async function ReimbursementDetail({ params }: { params: Promise<{ id: string }> }) {
   // Await params first to satisfy Next 15+ 
@@ -107,6 +108,8 @@ export default async function ReimbursementDetail({ params }: { params: Promise<
         <ExpenseFormTemplate reimbursement={reimbursement} />
         <div className="break-before-page"></div>
         <SingleDocumentPasteTemplate reimbursement={reimbursement} />
+        {/* EvidencePhotosTemplate handles its own break-before-page internally */}
+        <EvidencePhotosTemplate reimbursement={reimbursement} />
       </div>
     </>
   )
