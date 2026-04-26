@@ -81,7 +81,8 @@ export async function POST(request: Request) {
         category_id: catId || null,
         vendor: item.vendor,
         amount: Number(item.amount),
-        receipt_url: item.receipt_url || null
+        receipt_url: item.receipt_url || null,
+        evidence_urls: item.evidence_urls || []
       }
     })
 

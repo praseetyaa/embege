@@ -12,20 +12,35 @@ import {
   ArrowLeft,
   CheckCircle,
   Loader2,
-  Plus
+  Plus,
+  Image as ImageIcon,
+  X
 } from "lucide-react"
 import { toast } from "sonner"
 import { EXPENSE_CATEGORIES } from "@/lib/constants"
+import imageCompression from "browser-image-compression"
 
 export default function NewTransactionPage() {
   const [step, setStep] = useState(1)
   const [isUploading, setIsUploading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [isDraggingEvidence, setIsDraggingEvidence] = useState(false)
   
   const [items, setItems] = useState<any[]>([])
   
+  interface EvidenceFile {
+    id: string;
+    file: File;
+    previewUrl: string;
+    progress: number;
+    uploadedUrl?: string;
+    error?: string;
+  }
+  const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFile[]>([])
+  
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const evidenceInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -105,6 +120,122 @@ export default function NewTransactionPage() {
     }
   }, [items])
 
+  const processEvidenceFiles = async (files: FileList | File[]) => {
+    if (!files || files.length === 0) return
+
+    const newEvidences: EvidenceFile[] = []
+    
+    // Setup initial state for new files
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (!file.type.startsWith('image/')) {
+        toast.error(`File ${file.name} bukan gambar`)
+        continue
+      }
+      
+      const id = Date.now().toString() + "_" + i
+      const previewUrl = URL.createObjectURL(file)
+      
+      newEvidences.push({
+        id,
+        file,
+        previewUrl,
+        progress: 0
+      })
+    }
+    
+    if (newEvidences.length === 0) return
+    
+    setEvidenceFiles(prev => [...prev, ...newEvidences])
+    
+    // Process and upload each file
+    for (const evidence of newEvidences) {
+      try {
+        setEvidenceFiles(prev => prev.map(f => f.id === evidence.id ? { ...f, progress: 10 } : f))
+        
+        // 1. Compress Image
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          onProgress: (p: number) => {
+            // scale 10 to 40 for compression progress
+            const progress = 10 + Math.floor(p * 0.3)
+            setEvidenceFiles(prev => prev.map(f => f.id === evidence.id ? { ...f, progress } : f))
+          }
+        }
+        
+        const compressedFile = await imageCompression(evidence.file, options)
+        
+        // 2. Upload to Supabase Storage
+        setEvidenceFiles(prev => prev.map(f => f.id === evidence.id ? { ...f, progress: 40 } : f))
+        
+        // We will store in 'receipts' bucket since it's the most appropriate existing one, or just assume it exists
+        // Wait, what bucket was the receipt uploaded to? Let's check api/ocr or just use 'receipts'
+        const fileExt = compressedFile.name.split('.').pop()
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+        const filePath = `evidences/${fileName}`
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('receipts') // Ensure this bucket exists or use default
+          .upload(filePath, compressedFile, {
+            cacheControl: '3600',
+            upsert: false
+          })
+          
+        if (uploadError) throw uploadError
+        
+        setEvidenceFiles(prev => prev.map(f => f.id === evidence.id ? { ...f, progress: 90 } : f))
+        
+        // 3. Get Public URL
+        const { data: urlData } = supabase.storage
+          .from('receipts')
+          .getPublicUrl(filePath)
+          
+        setEvidenceFiles(prev => prev.map(f => f.id === evidence.id ? { 
+          ...f, 
+          progress: 100,
+          uploadedUrl: urlData.publicUrl 
+        } : f))
+        
+      } catch (error: any) {
+        console.error("Error uploading evidence:", error)
+        setEvidenceFiles(prev => prev.map(f => f.id === evidence.id ? { 
+          ...f, 
+          error: error.message || "Gagal upload" 
+        } : f))
+      }
+    }
+  }
+
+  const handleEvidenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      processEvidenceFiles(e.target.files)
+    }
+  }
+
+  const onDragOverEvidence = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDraggingEvidence(true)
+  }, [])
+
+  const onDragLeaveEvidence = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDraggingEvidence(false)
+  }, [])
+
+  const onDropEvidence = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDraggingEvidence(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processEvidenceFiles(e.dataTransfer.files)
+    }
+  }, [])
+
+  const removeEvidence = (id: string) => {
+    setEvidenceFiles(prev => prev.filter(f => f.id !== id))
+  }
+
   const updateItem = (id: string, field: string, value: any) => {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
@@ -138,6 +269,15 @@ export default function NewTransactionPage() {
 
     setIsSubmitting(true)
     
+    const uploadedEvidenceUrls = evidenceFiles
+      .filter(f => f.uploadedUrl)
+      .map(f => f.uploadedUrl);
+
+    const itemsWithEvidence = items.map(item => ({
+      ...item,
+      evidence_urls: uploadedEvidenceUrls
+    }))
+    
     try {
       const response = await fetch("/api/transactions", {
         method: "POST",
@@ -145,7 +285,7 @@ export default function NewTransactionPage() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          items
+          items: itemsWithEvidence
         })
       })
 
@@ -346,6 +486,70 @@ export default function NewTransactionPage() {
                 </table>
               </div>
             )}
+
+            {/* EVIDENCE UPLOAD SECTION */}
+            <div className="p-6 border-t border-slate-200 bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-700 mb-4">Bukti Fisik / Barang (Opsional)</h3>
+              
+              <div 
+                className={`upload-zone p-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors text-center ${
+                  isDraggingEvidence ? 'border-blue-500 bg-blue-100' : 'border-slate-300 hover:border-slate-400 bg-white'
+                }`}
+                onClick={() => evidenceInputRef.current?.click()}
+                onDragOver={onDragOverEvidence}
+                onDragLeave={onDragLeaveEvidence}
+                onDrop={onDropEvidence}
+              >
+                <ImageIcon className={`w-8 h-8 mx-auto mb-2 ${isDraggingEvidence ? 'text-blue-600' : 'text-slate-400'}`} />
+                <p className="text-sm font-medium text-slate-600 mb-1">Upload foto barang yang dibeli</p>
+                <p className="text-xs text-slate-500">Bisa lebih dari 1 gambar (JPG/PNG)</p>
+              </div>
+
+              <input 
+                type="file" 
+                ref={evidenceInputRef} 
+                className="hidden" 
+                multiple 
+                accept="image/*" 
+                onChange={handleEvidenceUpload}
+              />
+
+              {evidenceFiles.length > 0 && (
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {evidenceFiles.map(file => (
+                    <div key={file.id} className="relative group rounded-lg overflow-hidden border border-slate-200 bg-white">
+                      <img src={file.previewUrl} alt="preview" className="w-full h-24 object-cover" />
+                      
+                      {/* Delete Button */}
+                      <button 
+                        onClick={() => removeEvidence(file.id)}
+                        className="absolute top-1 right-1 p-1 bg-white/80 hover:bg-red-500 hover:text-white text-slate-600 rounded-full transition-colors z-10"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      {/* Progress or Error Overlay */}
+                      {file.error ? (
+                        <div className="absolute inset-x-0 bottom-0 bg-red-500/90 text-white text-[10px] p-1 text-center truncate">
+                          {file.error}
+                        </div>
+                      ) : file.progress < 100 ? (
+                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
+                          <div className="text-white text-xs font-bold mb-1">{file.progress}%</div>
+                          <div className="w-3/4 h-1.5 bg-white/30 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${file.progress}%` }}></div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="absolute bottom-1 right-1 bg-green-500 text-white rounded-full p-0.5">
+                          <CheckCircle className="w-3 h-3" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="p-6 flex justify-between border-t border-slate-200 bg-white">
               <button onClick={() => setStep(1)} className="btn-secondary">
