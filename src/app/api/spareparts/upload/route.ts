@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import * as xlsx from 'xlsx';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,31 +10,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
+    // Client sends pre-parsed JSON rows (Excel parsed in browser) to avoid server memory issues
+    const { rows, filename } = await request.json() as { rows: any[]; filename: string };
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (!rows || rows.length === 0) {
+      return NextResponse.json({ error: 'No data provided' }, { status: 400 });
     }
 
-    // Read file
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    // Parse Excel - limit to 20000 rows to prevent memory crash from hidden empty rows
-    const workbook = xlsx.read(buffer, { type: 'buffer', sheetRows: 20000 });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    
-    // Assuming the first row is headers, ignore blank rows
-    const rawData = xlsx.utils.sheet_to_json(worksheet, { blankrows: false }) as any[];
-    
     let updatedItems = 0;
     let errorCount = 0;
     
     const recordsToUpsert = [];
 
-    for (const row of rawData) {
+    for (const row of rows) {
       try {
         const kode_material = row['Kode Material'] || row['Material Code'] || row['kode_material'];
         if (!kode_material) continue;
@@ -64,7 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No valid data found in file' }, { status: 400 });
     }
 
-    // Insert in batches
+    // Insert in batches of 500
     const batchSize = 500;
     for (let i = 0; i < recordsToUpsert.length; i += batchSize) {
       const batch = recordsToUpsert.slice(i, i + batchSize);
@@ -82,12 +69,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Log upload
-    const { data: logData, error: logError } = await supabase
+    const { data: logData } = await supabase
       .from('upload_logs')
       .insert({
         user_id: user.id,
-        filename: file.name,
-        total_rows: rawData.length,
+        filename: filename || 'unknown.xlsx',
+        total_rows: rows.length,
         new_items: 0,
         updated_items: updatedItems,
         error_count: errorCount,

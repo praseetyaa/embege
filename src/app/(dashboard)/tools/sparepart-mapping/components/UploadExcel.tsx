@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import * as xlsx from 'xlsx';
+import { Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function UploadExcel({ onUploadSuccess }: { onUploadSuccess: () => void }) {
@@ -21,13 +22,24 @@ export function UploadExcel({ onUploadSuccess }: { onUploadSuccess: () => void }
     setIsUploading(true);
     setUploadResult(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      // Parse Excel in the browser to avoid server memory issues
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = xlsx.read(arrayBuffer, { type: 'array', sheetRows: 20000 });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const rows = xlsx.utils.sheet_to_json(worksheet, { blankrows: false });
+
+      if (rows.length === 0) {
+        toast.error('File Excel tidak memiliki data');
+        return;
+      }
+
+      // Send only clean JSON rows to the server (no heavy file buffer)
       const res = await fetch('/api/spareparts/upload', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows, filename: file.name }),
       });
 
       const data = await res.json();
@@ -37,7 +49,7 @@ export function UploadExcel({ onUploadSuccess }: { onUploadSuccess: () => void }
       }
 
       setUploadResult({ updated: data.updated, errors: data.errors });
-      toast.success('Upload berhasil');
+      toast.success(`Upload berhasil: ${data.updated} item diperbarui`);
       onUploadSuccess();
     } catch (error: any) {
       toast.error(error.message);
@@ -71,6 +83,7 @@ export function UploadExcel({ onUploadSuccess }: { onUploadSuccess: () => void }
           <div className="flex flex-col items-center">
             <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mb-3" />
             <p className="text-sm font-medium text-slate-600">Memproses data...</p>
+            <p className="text-xs text-slate-400 mt-1">Sedang membaca file Excel...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
