@@ -23,17 +23,39 @@ export function UploadExcel({ onUploadSuccess }: { onUploadSuccess: () => void }
     setUploadResult(null);
 
     try {
-      // Parse Excel in the browser to avoid server memory issues
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = xlsx.read(arrayBuffer, { type: 'array', sheetRows: 20000 });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const rows = xlsx.utils.sheet_to_json(worksheet, { blankrows: false });
+      // Use FileReader binary string approach - more memory efficient than arrayBuffer()
+      // Also skip styles, formulas, dates to massively reduce memory usage
+      const rows = await new Promise<any[]>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const binaryStr = e.target?.result as string;
+            const workbook = xlsx.read(binaryStr, {
+              type: 'binary',
+              sheetRows: 10000,      // hard limit rows
+              cellStyles: false,     // skip styles (saves a lot of memory)
+              cellFormulas: false,   // skip formulas
+              cellDates: false,      // skip date parsing
+              cellNF: false,         // skip number formatting
+              cellText: false,       // skip cached text
+            });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const data = xlsx.utils.sheet_to_json(worksheet, { blankrows: false });
+            resolve(data);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = () => reject(new Error('Gagal membaca file'));
+        reader.readAsBinaryString(file);
+      });
 
       if (rows.length === 0) {
         toast.error('File Excel tidak memiliki data');
         return;
       }
+
 
       // Send only clean JSON rows to the server (no heavy file buffer)
       const res = await fetch('/api/spareparts/upload', {
