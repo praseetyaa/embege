@@ -187,3 +187,67 @@ CREATE POLICY "Users can delete own asset request items" ON asset_request_items 
 );
 
 CREATE TRIGGER update_asset_requests_updated_at BEFORE UPDATE ON asset_requests FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+-- Create Spare Parts Table
+CREATE TABLE spare_parts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  kode_material TEXT NOT NULL,
+  nama_material TEXT,
+  kategori_bahan TEXT,
+  jenis_inventaris TEXT,
+  model_berlaku TEXT,
+  lokasi_kargo TEXT,
+  zona_kargo TEXT GENERATED ALWAYS AS (
+    CASE
+      WHEN lokasi_kargo LIKE '01-%' THEN '01'
+      WHEN lokasi_kargo LIKE '02-%' THEN '02'
+      WHEN lokasi_kargo LIKE 'SC-%' THEN 'SC'
+      WHEN lokasi_kargo LIKE 'P-%' THEN 'P'
+      WHEN lokasi_kargo LIKE 'A-%' THEN 'A'
+      WHEN lokasi_kargo ILIKE 'Tester%' THEN 'Tester'
+      ELSE 'Unknown'
+    END
+  ) STORED,
+  stok_sistem INTEGER DEFAULT 0,
+  stok_terpakai INTEGER DEFAULT 0,
+  stok_transit INTEGER DEFAULT 0,
+  total_inventaris INTEGER DEFAULT 0,
+  harga_ritel DECIMAL(12, 2) DEFAULT 0,
+  apakah_kosong BOOLEAN GENERATED ALWAYS AS (total_inventaris <= 0) STORED,
+  last_updated TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, kode_material)
+);
+
+-- Create Upload Logs Table
+CREATE TABLE upload_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  filename TEXT,
+  uploaded_at TIMESTAMPTZ DEFAULT NOW(),
+  total_rows INTEGER DEFAULT 0,
+  new_items INTEGER DEFAULT 0,
+  updated_items INTEGER DEFAULT 0,
+  error_count INTEGER DEFAULT 0,
+  status TEXT
+);
+
+-- RLS Policies for Spare Parts
+ALTER TABLE spare_parts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE upload_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own spare parts" ON spare_parts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own spare parts" ON spare_parts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own spare parts" ON spare_parts FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own spare parts" ON spare_parts FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Super admins can view all spare parts" ON spare_parts FOR SELECT USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+);
+
+-- Upload Logs
+CREATE POLICY "Users can view own upload logs" ON upload_logs FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own upload logs" ON upload_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE TRIGGER update_spare_parts_updated_at BEFORE UPDATE ON spare_parts FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();

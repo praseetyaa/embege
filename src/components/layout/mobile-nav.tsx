@@ -16,7 +16,8 @@ import {
   Receipt,
   Package,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Wrench
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -55,6 +56,13 @@ export function MobileNav({ isAdmin = false }: MobileNavProps) {
         { href: "/asset-requests", label: "Riwayat", icon: FileText },
       ]
     },
+    {
+      label: "Tools",
+      icon: Wrench,
+      children: [
+        { href: "/tools/sparepart-mapping", label: "Sparepart Mapping", icon: FileText }
+      ]
+    },
     { href: "/profile", label: "Profil", icon: User },
   ]
 
@@ -63,6 +71,13 @@ export function MobileNav({ isAdmin = false }: MobileNavProps) {
     { href: "/admin/submissions", label: "Semua Pengajuan", icon: FileText },
     { href: "/admin/users", label: "Kelola Pengguna", icon: User },
     { href: "/admin/categories", label: "Kategori", icon: Settings },
+    {
+      label: "Tools",
+      icon: Wrench,
+      children: [
+        { href: "/tools/sparepart-mapping", label: "Sparepart Mapping", icon: FileText }
+      ]
+    },
   ]
 
   const links = isAdmin ? adminLinks : userLinks
