@@ -22,13 +22,13 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    // Parse Excel
-    const workbook = xlsx.read(buffer, { type: 'buffer' });
+    // Parse Excel - limit to 20000 rows to prevent memory crash from hidden empty rows
+    const workbook = xlsx.read(buffer, { type: 'buffer', sheetRows: 20000 });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     
-    // Assuming the first row is headers
-    const rawData = xlsx.utils.sheet_to_json(worksheet) as any[];
+    // Assuming the first row is headers, ignore blank rows
+    const rawData = xlsx.utils.sheet_to_json(worksheet, { blankrows: false }) as any[];
     
     let updatedItems = 0;
     let errorCount = 0;
