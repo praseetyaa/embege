@@ -34,7 +34,7 @@ export function UploadExcel({ onUploadSuccess }: { onUploadSuccess: () => void }
               type: 'binary',
               sheetRows: 10000,      // hard limit rows
               cellStyles: false,     // skip styles (saves a lot of memory)
-              cellFormulas: false,   // skip formulas
+              cellFormula: false,    // skip formulas
               cellDates: false,      // skip date parsing
               cellNF: false,         // skip number formatting
               cellText: false,       // skip cached text
