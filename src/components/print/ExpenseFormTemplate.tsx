@@ -17,7 +17,8 @@ const CATEGORY_MAP: Record<string, string> = {
   "parking": "停车费", "toll": "过路费", "repairing": "维修费",
   "social insurance": "社保费", "medical insurance": "医疗保险", "accident insurance": "意外保险",
   "welfare": "福利费", "training expenses": "培训费", "Service fee": "劳务费",
-  "allowance": "补贴（天数）集补贴", "Transportation": "交通费", "hotel": "住宿费",
+  // FIX #6: fixed typo "集补贴" → "单天补贴"
+  "allowance": "补贴（天数*单天补贴）", "Transportation": "交通费", "hotel": "住宿费",
   "taxi": "市内交通费", "Bonus": "奖励",
   "advertising/promotion": "广告宣传/促销活动", "Marketing Fee": "市场管理服务",
   "claim price protection": "调价补差", "Adv. Production/installation": "广告制作/安装",
@@ -27,6 +28,43 @@ const CATEGORY_MAP: Record<string, string> = {
   "BNS entertain-gift": "业务招待费-礼品", "meeting-meals": "会务费-餐饮",
   "meeting-accommodation": "会务费-住宿", "meeting-rental": "会务费-租赁", "meeting-gift": "会务费-礼品"
 }
+
+// English display names for cost reasons sentence
+const CATEGORY_DISPLAY: Record<string, string> = {
+  "office rent": "OFFICE RENT", "warehouse rent": "WAREHOUSE RENT", "electricity&water": "ELECTRICITY & WATER",
+  "property management": "PROPERTY MANAGEMENT", "office supplies": "OFFICE SUPPLIES",
+  "service maintenance": "SERVICE MAINTENANCE", "tools & spare part": "TOOLS & SPARE PART",
+  "drinking water": "DRINKING WATER", "legal&professional fee": "LEGAL & PROFESSIONAL FEE",
+  "personnel recruitment": "PERSONNEL RECRUITMENT", "document expense": "DOCUMENT EXPENSE",
+  "telephone&fax": "TELEPHONE & FAX", "internet": "INTERNET", "supplies": "SUPPLIES",
+  "Tax Reklame": "TAX REKLAME", "vehicle": "VEHICLE", "computer": "COMPUTER",
+  "printer": "PRINTER", "projector": "PROJECTOR", "office furniture": "OFFICE FURNITURE",
+  "office appliances": "OFFICE APPLIANCES", "exhibitions": "EXHIBITIONS",
+  "space branding rent": "SPACE BRANDING RENT", "operating rental": "OPERATING RENTAL",
+  "vehicle rent": "VEHICLE RENT", "asset insurance": "ASSET INSURANCE",
+  "mobil insurance": "MOBIL INSURANCE", "car rental": "CAR RENTAL", "delivery": "DELIVERY",
+  "express": "EXPRESS", "gasoline": "GASOLINE", "parking": "PARKING", "toll": "TOLL",
+  "repairing": "REPAIRING", "social insurance": "SOCIAL INSURANCE",
+  "medical insurance": "MEDICAL INSURANCE", "accident insurance": "ACCIDENT INSURANCE",
+  "welfare": "WELFARE", "training expenses": "TRAINING EXPENSES", "Service fee": "SERVICE FEE",
+  "allowance": "ALLOWANCE", "Transportation": "TRANSPORTATION", "hotel": "HOTEL",
+  "taxi": "TAXI", "Bonus": "BONUS", "advertising/promotion": "ADVERTISING/PROMOTION",
+  "Marketing Fee": "MARKETING FEE", "claim price protection": "CLAIM PRICE PROTECTION",
+  "Adv. Production/installation": "ADV. PRODUCTION/INSTALLATION",
+  "Adv. Material": "ADV. MATERIAL", "public relation activity": "PUBLIC RELATION ACTIVITY",
+  "BNS entertain-meals": "BNS MEALS",
+  "BNS entertain-entertainment": "BNS ENTERTAINMENT",
+  "BNS entertain-hotel expense": "BNS HOTEL EXPENSE",
+  "BNS entertain-Transportation": "BNS TRANSPORTATION",
+  "BNS entertain-gift": "BNS GIFT",
+  "meeting-meals": "MEETING MEALS", "meeting-accommodation": "MEETING ACCOMMODATION",
+  "meeting-rental": "MEETING RENTAL", "meeting-gift": "MEETING GIFT",
+}
+
+const MONTH_NAMES = [
+  "JANUARI","FEBRUARI","MARET","APRIL","MEI","JUNI",
+  "JULI","AGUSTUS","SEPTEMBER","OKTOBER","NOVEMBER","DESEMBER"
+]
 
 function terbilang(angka: number): string {
   const huruf = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"]
@@ -61,17 +99,30 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
   const amountsByCategory: Record<string, number> = {}
   items.forEach((item: any) => {
     let cat = item.category || item.categories?.name || ""
-    cat = DB_TO_TEMPLATE[cat] || cat // Apply mapping
+    cat = DB_TO_TEMPLATE[cat] || cat
     if (!amountsByCategory[cat]) amountsByCategory[cat] = 0
     amountsByCategory[cat] += Number(item.amount)
   })
 
-  const itemDescriptions = items.map((item: any) => item.description).join(", ")
-  const costReasons = `${profile.full_name?.toUpperCase() || ''} REIMB PAID DUAN LONGCHANG BIAYA PEMBELIAN ${itemDescriptions.toUpperCase()} UNTUK SERVICE CENTER VIVO PURWOKERTO Rp${reimbursement.total_amount?.toLocaleString('id-ID') || '0'},-`
+  // FIX #3: Cost reasons — dinamis berdasarkan kategori & periode
+  const mainCategory = items[0]?.category || items[0]?.categories?.name || ""
+  const mappedCategory = DB_TO_TEMPLATE[mainCategory] || mainCategory
+  const categoryDisplay = CATEGORY_DISPLAY[mappedCategory] || mappedCategory.toUpperCase()
+
+  const periodeMonth = reimbursement.period
+    ? MONTH_NAMES[parseInt(reimbursement.period.split('-')[1]) - 1] || ""
+    : ""
+
+  const costReasons = `${profile.full_name?.toUpperCase() || ''} REIMB PAID DUAN LONGCHANG BIAYA ${categoryDisplay} PERIODE ${periodeMonth} VIVO PURWOKERTO Rp${reimbursement.total_amount?.toLocaleString('id-ID') || '0'},-`
+
   const totalInWords = terbilang(reimbursement.total_amount || 0).trim().toUpperCase() + " RUPIAH"
 
+  // FIX #1: Format tanggal dengan leading zero (01.07.2026 bukan 1.7.2026)
   const d = new Date(reimbursement.created_at)
-  const dateStr = `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`
+  const dateStr = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`
+
+  // FIX #4: Amount untuk field keuangan bawah
+  const totalFormatted = reimbursement.total_amount?.toLocaleString('id-ID') || '-'
 
   const bc = `1px solid ${P}`
   const bc2 = `2px solid ${P}`
@@ -146,8 +197,9 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
               <th style={{ border: bc, padding: '4px', textAlign: 'left', verticalAlign: 'middle', color: P, fontSize: '9px' }}>
                 <div>凭证编号</div><div>KODE U8 .</div>
               </th>
+              {/* FIX #5: "KODE CABANG" → "CABANG" */}
               <th style={{ border: bc, padding: '4px', textAlign: 'left', verticalAlign: 'middle', color: P, fontSize: '9px' }}>
-                <div>查询编码：</div><div>KODE CABANG</div>
+                <div>查询编码：</div><div>CABANG</div>
               </th>
             </tr>
             <tr>
@@ -180,6 +232,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
           <tbody>
             {/* Row 1 */}
             <tr>
+              {/* FIX #1: dateStr now has leading zeros */}
               {dataCell(dateStr)}
               {catCell("office rent")}
               {catCell("vehicle")}
@@ -211,8 +264,9 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
               {catCell("accident insurance")}
               {catCell("operating rental")}
               {amtCell(["electricity&water", "printer", "express", "accident insurance", "operating rental"])}
+              {/* FIX #7: bank account pakai spasi bukan dash */}
               <td rowSpan={2} style={{ border: bc, padding: '4px', textAlign: 'center', color: BLK, fontSize: '11px' }}>
-                {profile.bank_name || 'BCA'} {profile.bank_account || '358-0567-966'}
+                {profile.bank_name || 'BCA'} {(profile.bank_account || '358 0567 966').replace(/-/g, ' ')}
               </td>
             </tr>
             {/* Row 4 */}
@@ -249,9 +303,9 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
               {emptyCell(1)}
               {amtCell(["service maintenance", "office appliances", "toll", "Service fee", "claim price protection"])}
             </tr>
-            {/* Row 7 */}
+            {/* Row 7 — FIX #2: hardcode DUAN LONGCHANG, bukan profile.full_name */}
             <tr>
-              {dataCell(profile.full_name?.toUpperCase() || '')}
+              {dataCell("DUAN LONGCHANG")}
               {catCell("tools & spare part")}
               {catCell("exhibitions")}
               {catCell("repairing")}
@@ -282,7 +336,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
               {catCell("allowance")}
               {catCell("public relation activity")}
               {emptyCell(1)}
-              {amtCell(["legal&professional fee", "operating rental", "allowance", "Hotel", "public relation activity"])}
+              {amtCell(["legal&professional fee", "operating rental", "allowance", "hotel", "public relation activity"])}
             </tr>
             {/* Row 10 */}
             <tr>
@@ -299,7 +353,8 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
             </tr>
             {/* Row 11 */}
             <tr>
-              {dataCell(profile.bank_account || '358-0567-966')}
+              {/* FIX #7: bank account pakai spasi bukan dash */}
+              {dataCell((profile.bank_account || '358 0567 966').replace(/-/g, ' '))}
               {catCell("document expense")}
               {catCell("warehouse rent")}
               {emptyCell(1)}
@@ -357,7 +412,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
               {catCell("meeting-meals")}
               {amtCell(["Tax Reklame", "mobil insurance", "meeting-meals"])}
             </tr>
-            {/* Row 16 - Cost reasons */}
+            {/* Row 16 - Cost reasons — FIX #3: template dinamis */}
             <tr>
               {emptyCell(1)}
               <td colSpan={4} rowSpan={3} style={{ border: bc, padding: '3px', color: P, fontSize: '11px' }}>
@@ -379,7 +434,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
               {catCell("meeting-rental")}
               {amtCell(["meeting-rental"])}
             </tr>
-            {/* Row 18 - extra row for meeting-gift */}
+            {/* Row 18 */}
             <tr>
               {emptyCell()}
               {catCell("meeting-gift")}
@@ -401,16 +456,16 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><div>Rp</div><div>{reimbursement.total_amount?.toLocaleString('id-ID')}</div></div>
               </td>
             </tr>
-            {/* Row 20 */}
+            {/* Row 20 — FIX #4: isi field keuangan bawah dengan nilai total */}
             <tr>
               <td style={{ border: bc, padding: '2px 4px', textAlign: 'center', color: P, fontSize: '9px' }}>
                 <div>分公司付款签字</div><div style={{ fontSize: '8px' }}>Cashier signature</div>
               </td>
               <td style={{ border: bc, padding: '3px', color: P, fontSize: '9px' }}>
-                <div>Excluding VAT</div><div>RP:</div>
+                <div>Excluding VAT</div><div>RP: {totalFormatted}</div>
               </td>
               <td style={{ border: bc, padding: '3px', color: P, fontSize: '9px' }}>
-                <div>入账金额：amount AC</div><div>RP:</div>
+                <div>入账金额：amount AC</div><div>RP: {totalFormatted}</div>
               </td>
               <td style={{ border: bc, padding: '3px', color: P, fontSize: '9px' }}>
                 <div>代扣税PPH 【 】</div><div>RP: -</div>
@@ -424,7 +479,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
                 <div>□冲减往来Reduce C A</div>
               </td>
             </tr>
-            {/* Row 21 */}
+            {/* Row 21 — FIX #4: Actual Payment */}
             <tr>
               <td></td>
               <td style={{ border: bc, padding: '3px', color: P, fontSize: '9px' }}>
@@ -434,10 +489,10 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
                 <div>其他others</div><div>RP: -</div>
               </td>
               <td style={{ border: bc, padding: '3px', color: P, fontSize: '9px' }}>
-                <div>扣款debit</div><div>RP:</div>
+                <div>扣款debit</div><div>RP: -</div>
               </td>
               <td colSpan={2} style={{ border: bc, padding: '3px', color: P, fontSize: '9px' }}>
-                <div>实付金额ACTUAL PAYMENT</div><div>RP:</div>
+                <div>实付金额ACTUAL PAYMENT</div><div>RP: {totalFormatted}</div>
               </td>
               <td colSpan={2} style={{ border: bc, padding: '3px', color: P, fontSize: '9px' }}>
                 <div>□ Bank-BCA  □ Bank-Mandiri  □ Cash</div>
