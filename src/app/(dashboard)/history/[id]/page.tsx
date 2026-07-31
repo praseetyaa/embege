@@ -46,7 +46,7 @@ export default async function ReimbursementDetail({ params }: { params: Promise<
             <p className="text-slate-500">#{reimbursement.id.substring(0, 8).toUpperCase()}</p>
           </div>
           <div className="ml-auto flex gap-2 print:hidden">
-            {/* <DownloadExcelButton reimbursement={reimbursement} /> */}
+            <DownloadExcelButton reimbursement={reimbursement} />
             <PrintPdfButton />
           </div>
         </div>

@@ -3,6 +3,7 @@ import { formatCurrency, getStatusColor, getStatusLabel } from "@/lib/utils"
 import Link from "next/link"
 import { FileText, ChevronRight } from "lucide-react"
 import { HistoryFilters } from "./history-filters"
+import { DownloadExcelButton } from "@/components/ui/download-excel-button"
 
 export default async function HistoryPage({
   searchParams,
@@ -80,12 +81,18 @@ export default async function HistoryPage({
                     <td className="font-medium text-slate-900">{item.title}</td>
                     <td className="font-bold text-slate-900">{formatCurrency(item.total_amount)}</td>
                     <td>
-                      <Link 
-                        href={`/history/${item.id}`}
-                        className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
-                      >
-                        Detail <ChevronRight className="w-4 h-4 ml-1" />
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Link 
+                          href={`/history/${item.id}`}
+                          className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
+                        >
+                          Detail <ChevronRight className="w-4 h-4 ml-1" />
+                        </Link>
+                        <DownloadExcelButton
+                          reimbursement={item}
+                          className="px-2.5 py-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-xs font-medium rounded-md flex items-center gap-1 transition-colors"
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

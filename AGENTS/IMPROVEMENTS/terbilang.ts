@@ -27,6 +27,3 @@ export function formatRupiah(angka: number): string {
 export function terbilangRupiah(angka: number): string {
   return terbilang(angka).toUpperCase() + " RUPIAH"
 }
-
-export const formatTerbilangRupiah = terbilangRupiah
-
