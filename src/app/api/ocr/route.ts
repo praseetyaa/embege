@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     // Call Groq Vision API
     try {
       const response = await groq.chat.completions.create({
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: "qwen/qwen3.6-27b",
         messages: [
           {
             role: "user",
@@ -106,8 +106,9 @@ export async function POST(request: Request) {
         receipt_url: publicUrl
       })
 
-    } catch (visionError) {
-      console.error("Vision API Error:", visionError)
+    } catch (visionError: any) {
+      console.error("Vision API Error:", visionError?.message || visionError)
+      console.error("Vision API Error detail:", JSON.stringify(visionError?.error || {}, null, 2))
       // Return the uploaded URL anyway so user can manually input
       return NextResponse.json({ 
         items: [{
