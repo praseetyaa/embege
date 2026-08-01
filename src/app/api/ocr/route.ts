@@ -26,11 +26,11 @@ export async function POST(request: Request) {
     // Read file as base64
     const buffer = Buffer.from(await file.arrayBuffer())
     const base64Image = buffer.toString("base64")
-    const mimeType = file.type
+    const mimeType = file.type || "image/jpeg"
 
     // Upload to Supabase Storage first
     const fileName = `${user.id}/${Date.now()}-${file.name.replace(/\s+/g, "_")}`
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("receipts")
       .upload(fileName, file, {
         contentType: file.type,
@@ -55,7 +55,23 @@ export async function POST(request: Request) {
             content: [
               {
                 type: "text",
-                text: "Ekstrak informasi dari struk/nota ini dalam format JSON. Ekstrak data sebagai sebuah array bernama 'items'. Jika ada banyak barang yang dibeli di dalam satu nota, buatkan setiap barang menjadi satu objek di dalam array 'items'.\n\nUntuk setiap item ekstrak:\n1. date (format YYYY-MM-DD, jika tidak ada gunakan tanggal hari ini, samakan untuk semua item di nota yang sama)\n2. description (nama barang yang dibeli atau keperluan)\n3. category (pilih salah satu: 'ATK', 'Air Minum', 'Transportasi', 'Konsumsi', atau 'Lain-lain')\n4. vendor (nama toko/merchant, samakan untuk semua item di nota yang sama)\n5. amount (harga total untuk item tersebut dalam angka saja tanpa pemisah ribuan)\n\nKembalikan HANYA JSON raw dengan format:\n{\n  \"items\": [\n    { \"date\": \"...\", \"description\": \"...\", \"category\": \"...\", \"vendor\": \"...\", \"amount\": ... }\n  ]\n}"
+                text: `Ekstrak informasi dari struk/nota ini dalam format JSON.
+Ekstrak data sebagai sebuah array bernama 'items'.
+Jika ada banyak barang dalam satu nota, buatkan setiap barang menjadi satu objek di dalam array 'items'.
+
+Untuk setiap item ekstrak:
+1. date (format YYYY-MM-DD, jika tidak ada gunakan tanggal hari ini, samakan untuk semua item di nota yang sama)
+2. description (nama barang yang dibeli atau keperluan)
+3. category (pilih salah satu: 'ATK', 'Air Minum', 'Transportasi', 'Konsumsi', atau 'Lain-lain')
+4. vendor (nama toko/merchant, samakan untuk semua item di nota yang sama)
+5. amount (harga total untuk item tersebut dalam angka saja tanpa pemisah ribuan)
+
+Format output HANYA JSON seperti ini:
+{
+  "items": [
+    { "date": "2024-01-01", "description": "...", "category": "...", "vendor": "...", "amount": 10000 }
+  ]
+}`
               },
               {
                 type: "image_url",
@@ -67,59 +83,75 @@ export async function POST(request: Request) {
           }
         ],
         temperature: 0.1,
-        max_tokens: 1024,
+        max_completion_tokens: 2048,
       })
 
-      const content = response.choices[0]?.message?.content || "{}"
-      
-      // Clean up the JSON if it has markdown formatting
-      const cleanedContent = content.replace(/```json/g, "").replace(/```/g, "").trim()
-      
-      let parsedData;
+      const rawContent = response.choices[0]?.message?.content || "{}"
+      console.log("Groq raw response length:", rawContent.length)
+
+      // Strip <think>...</think> tags if present (Qwen thinking mode)
+      let cleaned = rawContent.replace(/<think>[\s\S]*?<\/think>/g, "").trim()
+      // Strip markdown code fences
+      cleaned = cleaned.replace(/```json/g, "").replace(/```/g, "").trim()
+
+      // If still not starting with {, try to extract first { ... } block
+      if (!cleaned.startsWith("{")) {
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          cleaned = jsonMatch[0]
+        }
+      }
+
+      console.log("Cleaned content to parse:", cleaned.substring(0, 200))
+
+      let parsedData: { items: any[] }
       try {
-        parsedData = JSON.parse(cleanedContent)
+        parsedData = JSON.parse(cleaned)
+
         // Ensure it has items array
         if (!parsedData.items || !Array.isArray(parsedData.items)) {
-           // If the AI returned a single object, wrap it in items
-           if (parsedData.description || parsedData.amount) {
-             parsedData = { items: [parsedData] }
-           } else {
-             throw new Error("Invalid format")
-           }
+          // If the AI returned a single object, wrap it
+          const obj = parsedData as any
+          if (obj.description || obj.amount) {
+            parsedData = { items: [obj] }
+          } else {
+            throw new Error("Invalid format: no items array")
+          }
         }
-      } catch (e) {
-        console.error("Failed to parse JSON:", content)
-        // Fallback generic data
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", cleaned.substring(0, 500))
+        // Fallback: return empty item so user can fill manually
         parsedData = {
           items: [{
-            date: new Date().toISOString().split('T')[0],
+            date: new Date().toISOString().split("T")[0],
             description: "Struk Pembelian",
             category: "Lain-lain",
-            vendor: "Vendor",
-            amount: 0
+            vendor: "",
+            amount: 0,
           }]
         }
       }
 
       return NextResponse.json({
         items: parsedData.items,
-        receipt_url: publicUrl
+        receipt_url: publicUrl,
       })
 
     } catch (visionError: any) {
-      console.error("Vision API Error:", visionError?.message || visionError)
-      console.error("Vision API Error detail:", JSON.stringify(visionError?.error || {}, null, 2))
-      // Return the uploaded URL anyway so user can manually input
-      return NextResponse.json({ 
+      console.error("Vision API Error message:", visionError?.message)
+      console.error("Vision API Error status:", visionError?.status)
+      console.error("Vision API Error detail:", JSON.stringify(visionError?.error ?? {}, null, 2))
+
+      return NextResponse.json({
         items: [{
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString().split("T")[0],
           description: "",
           category: "Lain-lain",
           vendor: "",
           amount: 0,
         }],
         receipt_url: publicUrl,
-        error: "OCR failed, please input manually"
+        error: `OCR failed: ${visionError?.message || "please input manually"}`,
       })
     }
 
