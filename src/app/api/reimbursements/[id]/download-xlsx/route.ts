@@ -338,21 +338,13 @@ export async function GET(
     sheet.cell("G21").value(rtG21)
 
     // ── 6. Cost reasons (B18) ───────────────────────────────────────────────
-    let mainCatName: string = items[0]?.categories?.name || items[0]?.category || ""
-    mainCatName = DB_TO_TEMPLATE[mainCatName] || mainCatName
-    const categoryDisplay = CATEGORY_DISPLAY[mainCatName] || mainCatName.toUpperCase()
-
-    const periodeMonth = reimb.period
-      ? MONTH_NAMES[parseInt(reimb.period.split("-")[1], 10) - 1] ?? ""
-      : ""
+    const itemDescriptions = items.map((item: any) => item.description || "").join(", ")
 
     const costReasons = [
       (profile.full_name || "").toUpperCase(),
-      "REIMB PAID DUAN LONGCHANG BIAYA",
-      categoryDisplay,
-      "PERIODE",
-      periodeMonth,
-      "VIVO PURWOKERTO",
+      "REIMB PAID DUAN LONGCHANG BIAYA PEMBELIAN",
+      itemDescriptions.toUpperCase(),
+      "UNTUK SERVICE CENTER VIVO PURWOKERTO",
       `Rp${totalFormatted},-`,
     ].join(" ")
 
