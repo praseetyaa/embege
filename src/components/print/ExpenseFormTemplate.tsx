@@ -1,5 +1,6 @@
 "use client"
 import { terbilangRupiah, formatRupiah } from "@/lib/terbilang"
+import { formatCostReasons } from "@/lib/reimbursement-helper"
 
 interface PrintTemplateProps {
   reimbursement: any
@@ -100,7 +101,12 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
     : ""
 
   const totalFormatted = formatRupiah(reimbursement.total_amount || 0)
-  const costReasons = `${profile.full_name?.toUpperCase() || ''} REIMB PAID DUAN LONGCHANG BIAYA ${categoryDisplay} PERIODE ${periodeMonth} VIVO PURWOKERTO Rp${totalFormatted},-`
+  const costReasons = formatCostReasons({
+    fullName: profile.full_name,
+    items: items,
+    totalAmount: reimbursement.total_amount,
+    department: profile.department,
+  })
   const totalInWords = terbilangRupiah(reimbursement.total_amount || 0)
 
   const d = new Date(reimbursement.created_at)

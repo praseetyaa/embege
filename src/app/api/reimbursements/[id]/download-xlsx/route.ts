@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/server"
 import path from "path"
 import fs from "fs"
 import { terbilangRupiah, formatRupiah } from "@/lib/terbilang"
+import { formatCostReasons } from "@/lib/reimbursement-helper"
 
 // ─── Nama bulan untuk kalimat cost reasons ────────────────────────────────────
 const MONTH_NAMES = [
@@ -338,15 +339,12 @@ export async function GET(
     sheet.cell("G21").value(rtG21)
 
     // ── 6. Cost reasons (B18) ───────────────────────────────────────────────
-    const itemDescriptions = items.map((item: any) => item.description || "").join(", ")
-
-    const costReasons = [
-      (profile.full_name || "").toUpperCase(),
-      "REIMB PAID DUAN LONGCHANG BIAYA PEMBELIAN",
-      itemDescriptions.toUpperCase(),
-      "UNTUK SERVICE CENTER VIVO PURWOKERTO",
-      `Rp${totalFormatted},-`,
-    ].join(" ")
+    const costReasons = formatCostReasons({
+      fullName: profile.full_name,
+      items: items,
+      totalAmount: total,
+      department: profile.department,
+    })
 
     const prefixB18 = "Cost reasons and completion\n费用支出原因及完成情况                                                                                                                                                                     "
     const rtB18 = new XlsxPopulate.RichText()

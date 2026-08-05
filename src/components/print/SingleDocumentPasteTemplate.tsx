@@ -1,5 +1,7 @@
 "use client"
 
+import { formatCostReasons } from "@/lib/reimbursement-helper"
+
 interface PrintTemplateProps {
   reimbursement: any
 }
@@ -15,8 +17,12 @@ export function SingleDocumentPasteTemplate({ reimbursement }: PrintTemplateProp
   const month = d.getMonth() + 1
   const day = d.getDate()
 
-  const itemDescriptions = items.map((item: any) => item.description).join(", ")
-  const costReasons = `${profile.full_name?.toUpperCase() || ''} REIMB PAID DUAN LONGCHANG BIAYA PEMBELIAN ${itemDescriptions.toUpperCase()} UNTUK SERVICE CENTER VIVO PURWOKERTO Rp${reimbursement.total_amount?.toLocaleString('id-ID') || '0'},-`
+  const costReasons = formatCostReasons({
+    fullName: profile.full_name,
+    items: items,
+    totalAmount: reimbursement.total_amount,
+    department: profile.department,
+  })
 
   const bc = `1px solid ${P}`
   const bc2 = `2px solid ${P}`
