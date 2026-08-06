@@ -109,7 +109,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
   })
   const totalInWords = terbilangRupiah(reimbursement.total_amount || 0)
 
-  const d = new Date(reimbursement.created_at)
+  const d = reimbursement.created_at ? new Date(reimbursement.created_at) : new Date()
   const dateStr = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`
 
   // Border styles: Medium 2px outer/headers, Thin 1px inner grid
