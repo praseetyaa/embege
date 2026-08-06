@@ -181,7 +181,7 @@ export function ExpenseFormTemplate({ reimbursement }: PrintTemplateProps) {
                 <div style={{ fontSize: '11px', fontWeight: 'bold' }}>EXPENSES REIMBURSEMENT- JATENG BARAT SELATAN</div>
               </th>
               <th style={{ border: borderThin, padding: '4px', textAlign: 'left', verticalAlign: 'middle', color: P, fontSize: '9px' }}>
-                <div>部门编码</div><div>DP   NO. 613</div>
+                <div>部门编码</div><div>DP   NO. 623</div>
               </th>
               <th style={{ border: borderThin, padding: '4px', textAlign: 'left', verticalAlign: 'middle', color: P, fontSize: '9px' }}>
                 <div>凭证编号</div><div>KODE U8 .</div>
