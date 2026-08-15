@@ -22,12 +22,7 @@ export const EXPENSE_CATEGORIES = [
   "projector",
   "office furniture",
   "office appliances",
-  "exhibitions",
-  "space branding ren",
   "operating rental",
-  "office rent",
-  "warehouse rent",
-  "property management",
   "vehicle rent",
   "asset insurance",
   "mobil insurance",
@@ -54,7 +49,6 @@ export const EXPENSE_CATEGORIES = [
   // MARKETING EXPENSES
   "exhibitions",
   "space branding rent",
-  "operating rental",
   "advertising/promotion",
   "Marketing Fee",
   "claim price protection",
@@ -71,3 +65,4 @@ export const EXPENSE_CATEGORIES = [
   "meeting-rental",
   "meeting-gift",
 ]
+

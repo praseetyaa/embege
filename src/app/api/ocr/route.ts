@@ -47,6 +47,37 @@ export async function POST(request: Request) {
 
     // Call Groq Vision API
     try {
+      const promptText = `Anda adalah asisten OCR struk/nota pengeluaran/reimbursement berbahasa Indonesia.
+Tugas Anda adalah membaca dan mengekstrak semua rincian barang/biaya dari gambar struk/nota ini ke dalam format JSON yang valid.
+
+Aturan Ekstraksi:
+1. 'items': Array berisi setiap barang atau biaya yang dibeli.
+2. Jika ini adalah nota multi-toko / belanja online (seperti Shopee/Tokopedia/Grab/GoFood dengan beberapa toko):
+   - Ekstrak setiap barang dari masing-masing toko.
+   - 'vendor': Gunakan nama toko spesifik barang tersebut (misal: "WINGS OFFICIAL SHOP", "TOKO BISMI") atau nama merchant utama.
+3. Untuk setiap item:
+   - 'date': Format YYYY-MM-DD (jika tidak tertera tanggal di nota, gunakan tanggal hari ini: ${new Date().toISOString().split("T")[0]}).
+   - 'description': Nama spesifik produk/barang yang dibeli (sertakan varian/ukuran jika ada).
+   - 'category': Pilih satu kategori yang paling tepat dari: 'Konsumsi' (makanan, minuman, kopi, teh, gula, snack), 'Air Minum' (galon, air mineral), 'ATK' (kertas, pulpen, lakban, alat tulis kantor), 'Transportasi' (bensin, parkir, tol, ojek), atau 'Lain-lain'.
+   - 'vendor': Nama toko / merchant.
+   - 'amount': Total harga untuk barang tersebut (kuantitas x harga satuan) dalam format integer (hanya angka bulat, tanpa tanda titik/koma/Rp).
+4. Biaya Layanan / Ongkir Tambahan:
+   - Jika ada biaya layanan (misal "Biaya Layanan Rp 1.000") atau ongkos kirim bersih (setelah diskon) yang bernilai lebih dari 0, masukkan juga sebagai item dengan kategori 'Lain-lain' atau 'Transportasi'.
+   - Jangan masukkan diskon sebagai item tersendiri.
+
+Wajib mengembalikan JSON murni dengan format persis:
+{
+  "items": [
+    {
+      "date": "YYYY-MM-DD",
+      "description": "Nama Barang",
+      "category": "Konsumsi",
+      "vendor": "Nama Toko",
+      "amount": 23400
+    }
+  ]
+}`
+
       const response = await groq.chat.completions.create({
         model: "qwen/qwen3.6-27b",
         messages: [
@@ -55,23 +86,7 @@ export async function POST(request: Request) {
             content: [
               {
                 type: "text",
-                text: `Ekstrak informasi dari struk/nota ini dalam format JSON.
-Ekstrak data sebagai sebuah array bernama 'items'.
-Jika ada banyak barang dalam satu nota, buatkan setiap barang menjadi satu objek di dalam array 'items'.
-
-Untuk setiap item ekstrak:
-1. date (format YYYY-MM-DD, jika tidak ada gunakan tanggal hari ini, samakan untuk semua item di nota yang sama)
-2. description (nama barang yang dibeli atau keperluan)
-3. category (pilih salah satu: 'ATK', 'Air Minum', 'Transportasi', 'Konsumsi', atau 'Lain-lain')
-4. vendor (nama toko/merchant, samakan untuk semua item di nota yang sama)
-5. amount (harga total untuk item tersebut dalam angka saja tanpa pemisah ribuan)
-
-Format output HANYA JSON seperti ini:
-{
-  "items": [
-    { "date": "2024-01-01", "description": "...", "category": "...", "vendor": "...", "amount": 10000 }
-  ]
-}`
+                text: promptText
               },
               {
                 type: "image_url",
@@ -82,14 +97,16 @@ Format output HANYA JSON seperti ini:
             ]
           }
         ],
+        response_format: { type: "json_object" },
+        reasoning_format: "parsed",
         temperature: 0.1,
-        max_completion_tokens: 2048,
-      })
+        max_completion_tokens: 4096,
+      } as any)
 
       const rawContent = response.choices[0]?.message?.content || "{}"
       console.log("Groq raw response length:", rawContent.length)
 
-      // Strip <think>...</think> tags if present (Qwen thinking mode)
+      // Strip <think>...</think> tags if present (Qwen thinking mode fallback)
       let cleaned = rawContent.replace(/<think>[\s\S]*?<\/think>/g, "").trim()
       // Strip markdown code fences
       cleaned = cleaned.replace(/```json/g, "").replace(/```/g, "").trim()
