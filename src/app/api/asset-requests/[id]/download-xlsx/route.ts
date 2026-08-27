@@ -51,9 +51,10 @@ export async function GET(
     }
 
     // ── Load template ────────────────────────────────────────────────────────
+    // Cari di folder templates/ (server-side accessible)
     const templatePath = path.join(
       process.cwd(),
-      "public",
+      "templates",
       "GA01 - FORM PERMINTAAN PERBAIKAN FIXED ASSET - ATK.xls"
     )
 
