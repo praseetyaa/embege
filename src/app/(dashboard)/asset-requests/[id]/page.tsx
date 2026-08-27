@@ -7,6 +7,7 @@ import { AssetRequest, Profile, AssetRequestItem } from "@/lib/types"
 import { ArrowLeft, Printer, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { AssetRequestPrint } from "@/components/print/AssetRequestPrint"
+import { DownloadAtkExcelButton } from "@/components/ui/download-atk-excel-button"
 import Link from "next/link"
 
 export default function AssetRequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -70,6 +71,7 @@ export default function AssetRequestDetailPage({ params }: { params: Promise<{ i
           <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
         </Link>
         <div className="flex gap-3">
+          <DownloadAtkExcelButton assetRequestId={resolvedParams.id} />
           <button 
             onClick={() => window.print()}
             className="btn-primary flex items-center bg-blue-600 hover:bg-blue-700"
