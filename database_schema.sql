@@ -154,6 +154,7 @@ CREATE TABLE asset_request_items (
   item_name TEXT NOT NULL,
   specification TEXT,
   quantity DECIMAL(12, 2) DEFAULT 1,
+  unit_price DECIMAL(12, 2) DEFAULT 0,
   image_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -90,7 +90,10 @@ export function AssetRequestPrint({ request }: AssetRequestPrintProps) {
                 <td className="border border-black p-2 align-top">{index + 1}</td>
                 <td className="border border-black p-2 align-top">{item.item_name}</td>
                 <td className="border border-black p-2 align-top">{item.specification || '-'}</td>
-                <td className="border border-black p-2 align-top">{item.quantity} unit</td>
+                <td className="border border-black p-2 align-top">
+                  <div>Rp {item.unit_price?.toLocaleString('id-ID') || '0'}</div>
+                  <div>{item.quantity} unit</div>
+                </td>
               </tr>
 
               {/* Image Row (if exists) */}

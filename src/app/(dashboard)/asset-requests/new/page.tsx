@@ -21,6 +21,7 @@ interface AssetRequestItemForm {
   item_name: string;
   specification: string;
   quantity: number;
+  unit_price: number;
   imageFile?: File | null;
   imagePreviewUrl?: string;
   imageUploadProgress?: number;
@@ -41,6 +42,7 @@ export default function NewAssetRequestPage() {
     item_name: "",
     specification: "",
     quantity: 1,
+    unit_price: 0,
   }])
   
   const router = useRouter()
@@ -109,6 +111,7 @@ export default function NewAssetRequestPage() {
         item_name: "",
         specification: "",
         quantity: 1,
+        unit_price: 0,
       }
     ])
   }
@@ -120,6 +123,11 @@ export default function NewAssetRequestPage() {
     const invalidItem = items.find(i => !i.item_name || !i.quantity)
     if (invalidItem) {
       toast.error("Mohon lengkapi nama barang dan jumlah untuk semua item")
+      return
+    }
+    const invalidPrice = items.find(i => !i.unit_price || i.unit_price <= 0)
+    if (invalidPrice) {
+      toast.error("Mohon isi harga satuan untuk semua item")
       return
     }
 
@@ -198,6 +206,7 @@ export default function NewAssetRequestPage() {
           item_name: item.item_name,
           specification: item.specification,
           quantity: item.quantity,
+          unit_price: item.unit_price,
           image_url: uploadedImageUrl
         })
       }
@@ -389,7 +398,7 @@ export default function NewAssetRequestPage() {
                   />
                 </div>
                 
-                <div className="md:col-span-5 space-y-2">
+                <div className="md:col-span-4 space-y-2">
                   <label className="text-xs font-medium text-slate-600">Spesifikasi</label>
                   <input 
                     type="text" 
@@ -400,8 +409,8 @@ export default function NewAssetRequestPage() {
                   />
                 </div>
                 
-                <div className="md:col-span-3 space-y-2">
-                  <label className="text-xs font-medium text-slate-600">Qty Permintaan *</label>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-xs font-medium text-slate-600">Qty *</label>
                   <input 
                     type="number" 
                     min="1"
@@ -409,6 +418,21 @@ export default function NewAssetRequestPage() {
                     onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
                     className="w-full p-2 border border-slate-200 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                   />
+                </div>
+
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-xs font-medium text-slate-600">Harga Satuan *</label>
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">Rp</span>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={item.unit_price || ""}
+                      onChange={(e) => updateItem(item.id, 'unit_price', Number(e.target.value))}
+                      className="w-full pl-7 pr-2 py-2 border border-slate-200 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
                 
                 <div className="md:col-span-12 mt-2">

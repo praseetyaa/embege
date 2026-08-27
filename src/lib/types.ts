@@ -96,6 +96,7 @@ export interface AssetRequestItem {
   item_name: string;
   specification: string | null;
   quantity: number;
+  unit_price: number;
   image_url: string | null;
   created_at: string;
 }
