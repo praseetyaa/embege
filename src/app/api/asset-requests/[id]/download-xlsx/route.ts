@@ -164,15 +164,27 @@ export async function GET(
       sheet[address] = { t: typeof value === "number" ? "n" : "s", v: value }
     }
 
-    // GA01 layout: C3-C5 are the form values and rows 7+ contain the items.
-    setCell("C3", profile.full_name || "")
-    setCell("C4", dateStr)
-    setCell("C5", `${assetRequest.department || ""} / ${assetRequest.area || ""}`)
+    // ── Isi header form ──────────────────────────────────────────────────────
+    // Template layout (1-based rows, file ref starts at A4):
+    //   Row 7 (r=6): A7:B7 = label "Nama Pemohon", C7:E7 = value
+    //   Row 8 (r=7): A8:B8 = label "Tanggal",      C8:D8 = value
+    //   Row 9 (r=8): A9:B9 = label "Department",   C9:E9 = value
+    setCell("C7", `: ${profile.full_name || "-"}`)
+    setCell("C8", `: ${dateStr}`)
+    setCell("C9", `: ${assetRequest.department || "-"} / ${assetRequest.area || "-"}`)
 
-    const START_ROW = 7
+    // ── Isi item barang ──────────────────────────────────────────────────────
+    // Template layout:
+    //   Row 11 (r=10): header — No. | Item Barang | Spesifikasi (C:D merged) | Qty (E)
+    //   Row 12 (r=11): first data row
+    //   A12:A30 = merged (single No cell) — not written per-item
+    //   B12:D29 = merged area for item name + image
+    //   E12:E29 = merged for qty
+    // We write to B{row} for item name, C{row} for spec, E{row} for qty
+    // starting at row 12 for the first item.
+    const START_ROW = 12
     items.forEach((item: any, index: number) => {
       const row = START_ROW + index
-      setCell(`A${row}`, index + 1)
       setCell(`B${row}`, item.item_name || "")
       setCell(`C${row}`, item.specification || "")
 
@@ -180,8 +192,9 @@ export async function GET(
       const qtyDisplay = Number(item.unit_price) > 0
         ? `Rp ${formatRupiah(Number(item.unit_price))} / ${quantity} unit`
         : `${quantity} unit`
-      setCell(`D${row}`, qtyDisplay)
+      setCell(`E${row}`, qtyDisplay)
     })
+
 
     // Keep the original template range and output a valid OOXML workbook.
     const output = XLSX.write(workbook, {
