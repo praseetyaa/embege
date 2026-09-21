@@ -173,26 +173,28 @@ export async function GET(
     setCell("C8", `: ${dateStr}`)
     setCell("C9", `: ${assetRequest.department || "-"} / ${assetRequest.area || "-"}`)
 
-    // ── Isi item barang ──────────────────────────────────────────────────────
-    // Template layout:
-    //   Row 11 (r=10): header — No. | Item Barang | Spesifikasi (C:D merged) | Qty (E)
-    //   Row 12 (r=11): first data row
-    //   A12:A30 = merged (single No cell) — not written per-item
-    //   B12:D29 = merged area for item name + image
-    //   E12:E29 = merged for qty
-    // We write to B{row} for item name, C{row} for spec, E{row} for qty
-    // starting at row 12 for the first item.
+    // ── Unmerge large item-area blocks (rows 13-30) ──────────────────────────
+    // Template has A13:A30, B13:D30, E13:E30 as single merged cells (image area).
+    // Remove these multi-row merges so we can write each item to its own row.
+    if (sheet['!merges']) {
+      sheet['!merges'] = (sheet['!merges'] as any[]).filter((m: any) => {
+        // Remove multi-row merges that span the item data area (r=12–29 = rows 13-30)
+        return !(m.s.r >= 12 && m.e.r <= 29 && m.s.r !== m.e.r)
+      })
+    }
+
     const START_ROW = 12
     items.forEach((item: any, index: number) => {
       const row = START_ROW + index
-      setCell(`B${row}`, item.item_name || "")
-      setCell(`C${row}`, item.specification || "")
+      setCell(`A${row}`, index + 1)           // No.
+      setCell(`B${row}`, item.item_name || "") // Item Barang
+      setCell(`C${row}`, item.specification || "") // Spesifikasi
 
       const quantity = item.quantity ?? 0
       const qtyDisplay = Number(item.unit_price) > 0
         ? `Rp ${formatRupiah(Number(item.unit_price))} / ${quantity} unit`
         : `${quantity} unit`
-      setCell(`E${row}`, qtyDisplay)
+      setCell(`E${row}`, qtyDisplay)           // Qty Permintaan
     })
 
 
