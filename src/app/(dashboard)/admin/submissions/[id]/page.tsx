@@ -41,7 +41,7 @@ export default async function AdminSubmissionDetail({ params }: { params: Promis
           <h1 className="text-2xl font-bold text-slate-900">Detail Catatan</h1>
           <p className="text-slate-500">#{reimbursement.id.substring(0, 8).toUpperCase()}</p>
         </div>
-        <div className="ml-auto flex gap-2 print:hidden">
+        <div className="ml-auto flex items-center gap-3 print:hidden shrink-0">
           <DownloadExcelButton reimbursement={reimbursement} />
           <PrintPdfButton />
         </div>

@@ -68,15 +68,17 @@ export default function AssetRequestDetailPage({ params }: { params: Promise<{ i
       {/* Top action bar - Hidden on print */}
       <div className="flex justify-between items-center print:hidden bg-white p-4 rounded-xl shadow-sm border border-slate-200">
         <Link href="/asset-requests" className="btn-secondary">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
+          <ArrowLeft className="w-4 h-4" />
+          <span>Kembali</span>
         </Link>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
           <DownloadAtkExcelButton assetRequestId={resolvedParams.id} />
           <button 
             onClick={() => window.print()}
-            className="btn-primary flex items-center bg-blue-600 hover:bg-blue-700"
+            className="btn-primary"
           >
-            <Printer className="w-4 h-4 mr-2" /> Print PDF
+            <Printer className="w-4 h-4" />
+            <span>Print PDF</span>
           </button>
         </div>
       </div>

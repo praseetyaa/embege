@@ -2,7 +2,7 @@
 
 import { Printer } from "lucide-react"
 
-export function PrintPdfButton() {
+export function PrintPdfButton({ className }: { className?: string }) {
   const handlePrint = () => {
     window.print()
   }
@@ -10,10 +10,13 @@ export function PrintPdfButton() {
   return (
     <button
       onClick={handlePrint}
-      className="btn-primary flex items-center justify-center gap-2 w-full print:hidden"
+      className={
+        className ||
+        "btn-primary shrink-0 whitespace-nowrap"
+      }
     >
-      <Printer className="w-4 h-4" />
-      Cetak&nbsp;PDF
+      <Printer className="w-4 h-4 shrink-0" />
+      <span>Cetak PDF</span>
     </button>
   )
 }

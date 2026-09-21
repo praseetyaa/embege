@@ -48,25 +48,22 @@ export function DownloadExcelButton({ reimbursement, className }: DownloadExcelB
   }
 
   return (
-    <div className="flex flex-col items-start gap-1">
+    <div className="relative inline-flex flex-col shrink-0">
       <button
         onClick={handleDownload}
         disabled={loading}
-        className={
-          className ||
-          "flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-medium rounded-lg transition-colors"
-        }
+        className={className || "btn-success shrink-0 whitespace-nowrap"}
       >
         {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
         ) : (
-          <Download className="w-4 h-4" />
+          <Download className="w-4 h-4 shrink-0" />
         )}
-        {loading ? "Menyiapkan..." : "Download Excel"}
+        <span className="whitespace-nowrap">{loading ? "Menyiapkan..." : "Download Excel"}</span>
       </button>
 
       {error && (
-        <p className="text-xs text-red-600">⚠ {error}</p>
+        <p className="absolute top-full right-0 mt-1 text-xs text-red-600 whitespace-nowrap bg-white px-2 py-0.5 rounded shadow border border-red-200 z-10">⚠ {error}</p>
       )}
     </div>
   )

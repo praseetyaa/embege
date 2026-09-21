@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { formatCurrency } from "@/lib/utils"
 import Link from "next/link"
+import { format } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
 import {
   FileText,
   Clock,
@@ -42,6 +44,17 @@ export default async function DashboardPage() {
   const { data: recent } = await supabase
     .from("reimbursements")
     .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(5)
+
+  // Fetch recent Asset Requests
+  const { data: recentAssetRequests } = await supabase
+    .from("asset_requests")
+    .select(`
+      *,
+      asset_request_items (*)
+    `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(5)
@@ -241,6 +254,96 @@ export default async function DashboardPage() {
                       <td className="px-6 py-5 text-right font-black text-slate-900">{formatCurrency(item.total_amount)}</td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Recent Asset Requests Section */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <Package className="w-5 h-5 text-amber-500" />
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Permintaan ATK & Asset Terakhir</h2>
+          </div>
+          <Link href="/asset-requests" className="text-sm font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 transition-colors">
+            Lihat Semua <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+          {(!recentAssetRequests || recentAssetRequests.length === 0) ? (
+            <div className="p-16 text-center">
+              <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-amber-100 shadow-inner">
+                <Package className="w-10 h-10 text-amber-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Belum ada permintaan ATK</h3>
+              <p className="text-slate-500 mb-8 max-w-xs mx-auto">Anda belum pernah mengajukan permintaan perbaikan fixed asset atau ATK.</p>
+              <Link href="/asset-requests/new" className="inline-flex items-center justify-center px-8 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/20 transition-all">
+                <Package className="w-5 h-5 mr-2" />
+                Buat Permintaan ATK
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/30">
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">No. Form / Tanggal</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Barang / Item</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Department / Area</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Total Barang</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {recentAssetRequests.map((req) => {
+                    const totalItems = req.asset_request_items?.length || 0
+                    const firstItem = req.asset_request_items?.[0]
+                    const itemTitle = firstItem
+                      ? firstItem.item_name + (totalItems > 1 ? ` (+${totalItems - 1} lainnya)` : "")
+                      : "-"
+                    const totalEst = req.asset_request_items?.reduce(
+                      (sum: number, it: any) => sum + (Number(it.unit_price || 0) * Number(it.quantity || 1)),
+                      0
+                    ) || 0
+
+                    return (
+                      <tr key={req.id} className="group hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-5">
+                          <Link href={`/asset-requests/${req.id}`} className="block">
+                            <span className="text-sm font-black text-amber-600 group-hover:underline">
+                              #{req.reg_form_no || "GA01"}
+                            </span>
+                            <span className="block text-[10px] font-bold text-slate-400 mt-0.5">
+                              {format(new Date(req.request_date), "dd MMM yyyy", { locale: idLocale })}
+                            </span>
+                          </Link>
+                        </td>
+                        <td className="px-6 py-5 font-bold text-slate-700">
+                          <div>{itemTitle}</div>
+                          {firstItem?.specification && (
+                            <span className="text-xs text-slate-400 font-normal">{firstItem.specification}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-5">
+                          <span className="text-sm font-medium text-slate-700">{req.department || "-"}</span>
+                          <span className="block text-xs text-slate-400">{req.area || "-"}</span>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black bg-amber-50 text-amber-700 border border-amber-100">
+                            {totalItems} Barang
+                          </span>
+                          {totalEst > 0 && (
+                            <span className="block text-xs font-bold text-slate-900 mt-1">
+                              {formatCurrency(totalEst)}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
