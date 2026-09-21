@@ -10,7 +10,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import path from "path"
 import fs from "fs"
-import XLSX from "xlsx"
+import * as XLSX from "xlsx"
 import { formatRupiah } from "@/lib/terbilang"
 import JSZip from "jszip"
 
@@ -190,15 +190,12 @@ export async function GET(
       cellStyles: true,
     })
 
-    // ── Generate buffer awal dari XlsxPopulate ─────────────────────────────────
-    const baseBuffer: Buffer = await workbook.outputAsync()
-
     // ── Inject Gambar & Tanda Tangan ke dalam OpenXML ─────────────────────────
     // Di template:
     // - xl/media/image1.jpeg = Logo VIVO (tetap dipertahankan)
     // - xl/media/image2.png  = Tanda Tangan Karyawan Terkait (Row 32-35 Col D)
     // - xl/media/image3.png  = Gambar Item Barang (Row 13-28 Col B-D)
-    const zip = await JSZip.loadAsync(baseBuffer)
+    const zip = await JSZip.loadAsync(output as Buffer)
 
     // 1. Gambar Item Barang:
     const itemWithImage = items.find((i: any) => i.image_url)
